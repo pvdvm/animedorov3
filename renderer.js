@@ -905,7 +905,7 @@ window.finishTimer = function() {
                 if (subRef) subRef.totalMinutes = (subRef.totalMinutes || 0) + duration;
 
                 const tagPart = currentSubcard.currentTag ? ` - ${currentSubcard.currentTag}` : "";
-                logName = `${currentSubject.name} - ${currentSubcard.name}${tagPart}`;
+                logName = `${currentSubcard.name}${tagPart}`;
                 logMeta = { kind: "subcard", parentType: "subject", parentId: currentSubject.id, subId: currentSubcard.id };
             } else {
                 // Define Nome e Tag
