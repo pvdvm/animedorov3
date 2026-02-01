@@ -887,6 +887,18 @@ window.finishTimer = function() {
             // Atualiza minutos
             const ref = (appData.studySubjects || []).find(s => s.id === currentSubject.id);
             if (ref) ref.totalMinutes = (ref.totalMinutes || 0) + duration;
+
+            if (!currentSubcard && window.ACTIVE_SESSION && window.ACTIVE_SESSION.type === "subcard") {
+                const sameParent = window.ACTIVE_SESSION.parentType === "subject"
+                  && String(window.ACTIVE_SESSION.parentId) === String(currentSubject.id);
+                if (sameParent && ref?.subItems) {
+                    const recovered = ref.subItems.find(s => s.id === window.ACTIVE_SESSION.subId);
+                    if (recovered) {
+                        currentSubcard = recovered;
+                        currentSubcardParent = { type: "subject", id: currentSubject.id };
+                    }
+                }
+            }
             
             if (currentSubcard && currentSubcardParent?.type === "subject" && String(currentSubcardParent.id) === String(currentSubject.id)) {
                 const subRef = ref?.subItems?.find(s => s.id === currentSubcard.id);
