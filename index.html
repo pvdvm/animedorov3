@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Animedoro Pro 2</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+  <!-- TOP BAR -->
+  <nav class="top-bar">
+    <div class="top-title">
+      <i class="fas fa-leaf nature-icon"></i> <span>Animedoro Pro 2</span>
+    </div>
+    <div class="top-controls">
+      <button onclick="toggleDark()" title="Modo Noite"><i class="fas fa-moon"></i></button>
+      <button onclick="openSettings()" title="Ajustes"><i class="fas fa-cog"></i></button>
+      <button onclick="saveData(true)" title="Salvar" class="save-btn"><i class="fas fa-bookmark"></i></button>
+    </div>
+  </nav>
+
+  <!-- INPUTS ÚNICOS (NÃO DUPLICAR IDs) -->
+  <input type="file" id="file-bg" accept="image/*" style="display:none;">
+  <input type="file" id="file-sound" accept="audio/*" style="display:none;">
+  <input type="file" id="file-import" accept=".json" style="display:none;">
+  <input type="file" id="file-timer-bg" accept="image/*" style="display:none;">
+
+  <input type="file" id="file-custom-icon" accept="image/*" style="display:none;">
+  <input type="file" id="file-edit-icon" accept="image/*" style="display:none;">
+  <input type="file" id="file-subject-icon" accept="image/*" style="display:none;">
+
+  <input type="file" id="anime-cover-input" accept="image/*" style="display:none;">
+
+  <!-- MODAL: NOVA ABA (CUSTOM TIMER) -->
+  <div id="custom-modal" class="modal-overlay" style="display:none;">
+    <div class="floating-window paper-window">
+      <div class="modal-header">
+        <h3><i class="fas fa-pencil-alt"></i> Nova Atividade</h3>
+        <button class="close-modal-btn" onclick="closeModal()">X</button>
+      </div>
+
+      <div class="modal-body">
+        <label class="input-label">Nome da Atividade</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="custom-name-input"
+            placeholder="Ex: Plantar, Ler..."
+            maxlength="15"
+            autocomplete="off"
+          />
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; margin-top:15px;">
+          <button onclick="document.getElementById('file-custom-icon').click()" class="btn-rural small">
+            Escolher Imagem
+          </button>
+          <span id="custom-icon-status" style="font-size:0.75rem; color:var(--text-gray);">Nenhum</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button onclick="confirmCustomTimer()" class="btn-rural confirm">Criar Aba</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS -->
+  <div id="settings-modal" class="modal-overlay" style="display:none;">
+    <div class="floating-window paper-window settings-window">
+      <div class="modal-header">
+        <h3>Ajustes</h3>
+        <button class="close-modal-btn" onclick="closeSettings()">X</button>
+      </div>
+
+      <div class="modal-body settings-body" style="max-height:400px; overflow-y:auto;">
+
+        <div class="setting-block">
+          <label class="setting-title"><i class="fas fa-list"></i> Abas dos Timers</label>
+          <div id="timers-management-list"></div>
+        </div>
+
+        <div class="setting-block">
+          <label class="setting-title">Avançado (Dev)</label>
+          <button onclick="openDevModal()" class="btn-rural" style="width:100%; background:#333; color:#fff;">
+            <i class="fas fa-terminal"></i> Abrir Console de Código
+          </button>
+        </div>
+
+        <div class="setting-block">
+          <label class="setting-title">Modo Geral</label>
+          <div class="mode-selector-row">
+            <button class="btn-rural small mode-btn" id="btn-mode-light" onclick="setDarkMode(false)">Claro</button>
+            <button class="btn-rural small mode-btn" id="btn-mode-dark" onclick="setDarkMode(true)">Escuro</button>
+          </div>
+        </div>
+
+        <div class="setting-block">
+          <label>Transparência</label>
+          <input type="range" id="range-transparency" min="0.2" max="1" step="0.05">
+        </div>
+
+        <div class="setting-block">
+          <label>Bordas Arredondadas</label>
+          <input type="range" id="range-radius" min="0" max="50" step="1">
+        </div>
+
+        <div class="setting-block">
+          <label class="setting-title">Temas & Conversões</label>
+
+          <div style="margin-bottom:15px; border-bottom:1px dashed var(--border-soft); padding-bottom:10px;">
+            <span style="font-size:0.75rem; color:var(--text-gray); display:block; margin-bottom:8px; font-weight:bold;">
+              MODOS DE INTERFACE:
+            </span>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+              <button class="theme-btn" onclick="setTheme('thinkers')" title="Academia/Escritório"
+                style="width:auto; padding:5px 10px; background:#3e2723; color:#cbbfa8; border:1px solid #8f7968; font-family:serif; font-size:0.75rem;">
+                Pensadores
+              </button>
+              <button class="theme-btn" onclick="setTheme('philosophy')" title="Grécia Antiga"
+                style="width:auto; padding:5px 10px; background:#f5f5f5; color:#000; border:2px double #000; font-family:serif; font-size:0.75rem;">
+                Filosofia
+              </button>
+              <button class="theme-btn" onclick="setTheme('ngnl')" title="No Game No Life"
+                style="width:auto; padding:5px 10px; background:linear-gradient(45deg, #ff4081, #00e5ff); color:#fff; border:none; font-weight:bold; font-size:0.75rem;">
+                NGNL
+              </button>
+              <button class="theme-btn" onclick="setTheme('hikikomori')" title="Quarto Escuro"
+                style="width:auto; padding:5px 10px; background:#2d3748; color:#a0aec0; border:1px solid #4a5568; font-family:monospace; font-size:0.75rem;">
+                Hikikomori
+              </button>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="theme-btn" onclick="setTheme('default')" style="width:auto; background:#eee; border:1px solid #ccc; font-size:0.7rem; padding:3px 8px;">Padrão</button>
+              <button class="theme-btn" onclick="setTheme('medieval')" style="width:auto; background:#4e342e; color:#f8e8c8; font-size:0.7rem; padding:3px 8px;">RPG</button>
+              <button class="theme-btn" onclick="setTheme('frieren-ui')" style="width:auto; background:#fff; color:#4a5d7e; font-size:0.7rem; padding:3px 8px;">Grimório</button>
+              <button class="theme-btn" onclick="setTheme('wired-ui')" style="width:auto; background:#000; color:#f33; font-size:0.7rem; padding:3px 8px;">Wired</button>
+              <button class="theme-btn" onclick="setTheme('academic')" style="width:auto; background:#3d2b1f; color:#cba87a; font-size:0.7rem; padding:3px 8px;">Biblio</button>
+              <button class="theme-btn" onclick="setTheme('science')" style="width:auto; background:#f0f8ff; color:#003366; font-size:0.7rem; padding:3px 8px;">Ciência</button>
+              <button class="theme-btn" onclick="setTheme('space')" style="width:auto; background:#0a0e1a; color:#7c4dff; font-size:0.7rem; padding:3px 8px;">Espaço</button>
+              <button class="theme-btn" onclick="setTheme('apocalypse')" style="width:auto; background:#2a2520; color:#cd5c5c; font-size:0.7rem; padding:3px 8px;">Apocalipse</button>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+              <button class="theme-btn" onclick="setTheme('retro98')" style="width:auto; background:#008080; color:#fff; font-size:0.7rem; padding:3px 8px;">Win98</button>
+              <button class="theme-btn" onclick="setTheme('win7')" style="width:auto; background:#0072bc; color:#fff; font-size:0.7rem; padding:3px 8px;">Win7</button>
+              <button class="theme-btn" onclick="setTheme('win10')" style="width:auto; background:#111; color:#0078d7; font-size:0.7rem; padding:3px 8px;">Win10</button>
+            </div>
+          </div>
+
+          <span style="font-size:0.75rem; color:var(--text-gray); display:block; margin-bottom:5px;">Paletas de Cores:</span>
+          <div class="theme-selector">
+            <button class="theme-btn" onclick="setTheme('coffee')" title="Café" style="background:#fff8e1; border:1px solid #8d6e63;">☕</button>
+            <button class="theme-btn theme-default" onclick="setTheme('default')" title="Padrão"></button>
+            <button class="theme-btn theme-darkgreen" onclick="setTheme('darkgreen')" title="Floresta"></button>
+            <button class="theme-btn theme-sakura" onclick="setTheme('sakura')" title="Sakura"></button>
+            <button class="theme-btn theme-river" onclick="setTheme('river')" title="Rio"></button>
+            <button class="theme-btn theme-autumn" onclick="setTheme('autumn')" title="Outono"></button>
+            <button class="theme-btn theme-abyss" onclick="setTheme('abyss')" title="Abismo"></button>
+            <button class="theme-btn theme-lain" onclick="setTheme('lain')" title="Lain (Cor)"></button>
+            <button class="theme-btn theme-eva" onclick="setTheme('eva')" title="Eva"></button>
+            <button class="theme-btn theme-ergo" onclick="setTheme('ergo')" title="Ergo Proxy"></button>
+            <button class="theme-btn theme-konosuba" onclick="setTheme('konosuba')" title="Konosuba"></button>
+            <button class="theme-btn theme-opm" onclick="setTheme('opm')" title="One Punch"></button>
+            <button class="theme-btn theme-another" onclick="setTheme('another')" title="Another"></button>
+            <button class="theme-btn theme-womb" onclick="setTheme('womb')" title="Womb"></button>
+            <button class="theme-btn theme-darkcity" onclick="setTheme('darkcity')" title="Dark City"></button>
+            <button class="theme-btn theme-matrix" onclick="setTheme('matrix')" title="Matrix"></button>
+            <button class="theme-btn theme-piercing" onclick="setTheme('piercing')" title="Piercing"></button>
+            <button class="theme-btn theme-stalker" onclick="setTheme('stalker')" title="Stalker"></button>
+            <button class="theme-btn theme-berserk" onclick="setTheme('berserk')" title="Berserk"></button>
+            <button class="theme-btn theme-rainbows" onclick="setTheme('rainbows')" title="In Rainbows"></button>
+            <button class="theme-btn theme-okc" onclick="setTheme('okc')" title="OK Computer"></button>
+            <button class="theme-btn theme-wired" onclick="setTheme('wired')" title="The Wired"></button>
+            <button class="theme-btn theme-navi" onclick="setTheme('navi')" title="Navi 98"></button>
+            <button class="theme-btn theme-noise" onclick="setTheme('noise')" title="Static"></button>
+            <button class="theme-btn theme-blade" onclick="setTheme('blade')" title="Blade Runner"></button>
+            <button class="theme-btn theme-silent" onclick="setTheme('silent')" title="Silent Hill"></button>
+            <button class="theme-btn theme-ghost" onclick="setTheme('ghost')" title="Ghost"></button>
+            <button class="theme-btn theme-win95" onclick="setTheme('win95')" title="Win95 (Color)"></button>
+          </div>
+        </div>
+
+        <div class="setting-block">
+          <label class="setting-title">Arquivos</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button onclick="document.getElementById('file-bg').click()" class="btn-rural small">Wallpaper</button>
+            <button onclick="document.getElementById('file-timer-bg').click()" class="btn-rural small">Timer BG</button>
+            <button onclick="document.getElementById('file-sound').click()" class="btn-rural small">Alarme</button>
+            <button onclick="exportData()" class="btn-rural small">Backup</button>
+            <button onclick="document.getElementById('file-import').click()" class="btn-rural small">Restaurar</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIRM -->
+  <div id="confirm-modal" class="modal-overlay" style="display:none;">
+    <div class="rural-panel modal-box" style="width:350px;">
+      <h3 id="confirm-title" style="margin-top:0; color:var(--primary-green);">
+        <i class="fas fa-question-circle"></i> Confirmação
+      </h3>
+      <p id="confirm-msg" class="confirm-message">Tem certeza?</p>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <button class="btn-rural" onclick="closeConfirm()">Não</button>
+        <button class="btn-rural danger" id="btn-confirm-action">Sim</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ALERT -->
+  <div id="alert-modal" class="modal-overlay" style="display:none;">
+    <div class="floating-window paper-window" style="width:320px; text-align:center;">
+      <div class="modal-header">
+        <h3>Aviso</h3>
+        <button class="close-modal-btn" onclick="closeAlert()">X</button>
+      </div>
+      <div class="modal-body">
+        <p id="alert-msg" class="confirm-message"></p>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:center;">
+        <button onclick="closeAlert()" class="btn-rural confirm">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MATÉRIAS -->
+  <div id="study-menu-modal" class="modal-overlay" style="display:none; z-index:99999;">
+    <div class="rural-panel window-floating" style="position:relative; width:500px; max-width:90%; max-height:80vh; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border-soft); padding-bottom:10px;">
+        <h3 style="margin:0; display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-layer-group"></i> Matérias
+        </h3>
+        <button onclick="closeStudyMenu()" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-gray);">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div style="text-align:center; margin-bottom:20px; font-size:0.9rem; color:var(--text-gray);">
+        Tempo Total: <b id="total-study-time" style="color:var(--text-brown); font-size:1.1rem;">0 min</b>
+      </div>
+
+      <div id="study-subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:15px; overflow-y:auto; padding:5px;"></div>
+
+      <div style="margin-top:20px; text-align:center; border-top:1px solid var(--border-soft); padding-top:15px;">
+        <button class="btn-rural" onclick="openNewSubjectModal()" style="width:100%;">
+          <i class="fas fa-plus-circle"></i> Criar Nova Matéria
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVA MATÉRIA -->
+  <div id="new-subject-modal" class="modal-overlay" style="display:none; z-index:100000;">
+    <div class="rural-panel window-floating" style="position:relative; width:300px; padding:20px;">
+      <h4 style="margin-top:0;">Nova Matéria</h4>
+
+      <label style="font-size:0.8rem; color:var(--text-gray);">Nome:</label>
+      <input type="text" id="new-subject-name" class="rural-input" placeholder="Ex: Português" style="width:100%; margin-bottom:10px;">
+
+      <label style="font-size:0.8rem; color:var(--text-gray);">Ícone:</label>
+      <input type="text" id="new-subject-emoji" class="rural-input" placeholder="Emoji (ex: 📚)" style="width:100%; margin-bottom:10px;">
+
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+        <button onclick="document.getElementById('file-subject-icon').click()" class="btn-rural small">
+          <i class="fas fa-image"></i> Usar Imagem
+        </button>
+        <span id="subject-img-status" style="font-size:0.7rem; color:var(--text-gray);">Nenhuma</span>
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn-rural" onclick="document.getElementById('new-subject-modal').style.display='none'">Cancelar</button>
+        <button class="btn-rural confirm" onclick="confirmCreateSubject()">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR ITEM (matéria/subcard) -->
+  <div id="edit-subject-modal" class="edit-overlay" style="display:none; z-index:2147483647;">
+    <div class="edit-window">
+      <div class="edit-header">
+        <div id="edit-modal-title" class="edit-title">EDITAR: ITEM</div>
+        <button class="edit-close-x" onclick="closeEditSubjectModal()">×</button>
+      </div>
+
+      <div class="edit-body">
+
+        <div class="edit-section">
+          <div class="edit-section-title">
+            <span class="edit-mark"></span>
+            <span class="edit-section-icon">🖼️</span>
+            <span>Visual do Card</span>
+          </div>
+          <button class="edit-big-btn" onclick="triggerImageUpload()">Alterar Imagem/ícone</button>
+        </div>
+
+        <div class="edit-section">
+          <div class="edit-section-title">
+            <span class="edit-mark"></span>
+            <span class="edit-section-icon">🏷️</span>
+            <span>Assunto Atual (Tag)</span>
+          </div>
+
+          <div class="edit-tag-row">
+            <input id="new-tag-input" class="edit-input" placeholder="Ex: Sintaxe, Crase..." />
+            <button class="edit-plus-btn" onclick="addTagToSubject()">+</button>
+          </div>
+
+          <div id="subject-tags-list" class="edit-tags-wrap"></div>
+
+          <div class="edit-hint">
+            * Clique na tag para selecionar como assunto atual.
+          </div>
+        </div>
+
+      </div>
+
+      <div class="edit-footer">
+        <button class="edit-big-btn" onclick="closeEditSubjectModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ANIME FORM -->
+  <div id="anime-form-modal" class="modal-overlay" style="display:none; z-index:6000;">
+    <div class="paper-window" style="width:400px;">
+      <div class="modal-header">
+        <h3 id="anime-form-title">Novo Item</h3>
+        <button class="close-modal-btn" onclick="closeAnimeForm()">✖</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="anime-form-grid">
+          <div class="anime-cover-upload" onclick="document.getElementById('anime-cover-input').click()">
+            <img id="anime-cover-preview" style="display:none;">
+            <span id="anime-cover-placeholder"><i class="fas fa-camera"></i><br>Capa</span>
+          </div>
+
+          <div class="anime-inputs">
+            <div class="input-wrapper"><input type="text" id="anime-name" placeholder="Nome (Ex: Naruto)"></div>
+            <div class="input-wrapper" style="margin-top:5px;"><input type="number" id="anime-total-eps" placeholder="Total Eps (0 = ?)"></div>
+          </div>
+        </div>
+
+        <label class="input-label">Categoria:</label>
+        <div class="mode-selector-row" style="margin-bottom:15px;">
+          <button class="btn-rural small active" id="type-anime" onclick="setMediaType('Anime')">Anime</button>
+          <button class="btn-rural small" id="type-manga" onclick="setMediaType('Mangá')">Mangá</button>
+          <button class="btn-rural small" id="type-serie" onclick="setMediaType('Série')">Série</button>
+        </div>
+
+        <label class="input-label">Avaliação:</label>
+        <div class="star-rating" id="anime-rating">
+          <i class="far fa-star" onclick="setRating(1)"></i>
+          <i class="far fa-star" onclick="setRating(2)"></i>
+          <i class="far fa-star" onclick="setRating(3)"></i>
+          <i class="far fa-star" onclick="setRating(4)"></i>
+          <i class="far fa-star" onclick="setRating(5)"></i>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-rural" onclick="closeAnimeForm()">Cancelar</button>
+        <button class="btn-rural confirm" onclick="saveAnimeItem()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DEV -->
+  <div id="dev-modal" class="modal-overlay" style="display:none; z-index:999999;">
+    <div class="paper-window" style="width:900px; height:85vh; display:flex; flex-direction:column; background:#1e1e1e; border:1px solid #444; box-shadow:0 0 30px rgba(0,0,0,0.5);">
+      <div class="modal-header" style="background:#252526; color:#ccc; border-bottom:1px solid #333; padding:10px 15px;">
+        <h3 style="font-size:0.9rem; margin:0;"><i class="fas fa-terminal"></i> Developer Console</h3>
+        <button class="close-modal-btn" onclick="closeDevModal()" style="color:#ccc;">✖</button>
+      </div>
+
+      <div class="dev-tabs" style="display:flex; background:#252526; border-bottom:1px solid #333;">
+        <button class="tab-btn active" id="tab-css-btn" onclick="switchDevTab('css')">CSS</button>
+        <button class="tab-btn" id="tab-html-btn" onclick="switchDevTab('html')">HTML</button>
+        <button class="tab-btn" id="tab-js-btn" onclick="switchDevTab('js')">JS</button>
+      </div>
+
+      <div class="modal-body" style="flex:1; padding:0; background:#1e1e1e; overflow:hidden; position:relative;">
+        <div id="wrapper-css" class="code-wrapper" style="display:flex;">
+          <div class="line-numbers" id="lines-css">1</div>
+          <textarea id="custom-css-area" class="code-area" spellcheck="false" placeholder="/* Cole seu CSS aqui */"
+            oninput="updateLineNumbers('css')" onscroll="syncScroll('css')"></textarea>
+        </div>
+
+        <div id="wrapper-html" class="code-wrapper" style="display:none;">
+          <div class="line-numbers" id="lines-html">1</div>
+          <textarea id="custom-html-area" class="code-area" spellcheck="false"
+            oninput="updateLineNumbers('html')" onscroll="syncScroll('html')"></textarea>
+        </div>
+
+        <div id="wrapper-js" class="code-wrapper" style="display:none;">
+          <div class="line-numbers" id="lines-js">1</div>
+          <textarea id="custom-js-area" class="code-area" spellcheck="false" placeholder="// Cole seu JS aqui"
+            oninput="updateLineNumbers('js')" onscroll="syncScroll('js')"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background:#007acc; border-top:none; padding:5px 15px; display:flex; align-items:center;">
+        <span style="font-size:0.75rem; color:#fff; margin-right:auto;">
+          <i class="fas fa-code-branch"></i> Injeção Ativa
+        </span>
+        <button onclick="closeDevModal()" style="background:none; border:none; color:#fff; cursor:pointer; margin-right:15px; font-size:0.8rem;">Cancelar</button>
+        <button onclick="saveAndInjectCode()" style="background:#fff; color:#007acc; border:none; padding:4px 12px; border-radius:2px; font-weight:bold; cursor:pointer; font-size:0.8rem;">
+          <i class="fas fa-play"></i> Aplicar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SUBCARDS (UNIVERSAL MENU) -->
+  <div id="universal-menu-modal" class="rural-overlay" style="display:none; z-index:120000;">
+    <div class="rural-window">
+      <div class="rural-window-header">
+        <div class="rural-window-title">
+          <span class="rural-window-icon">≋</span>
+          <span id="universal-menu-title">Subcards</span>
+        </div>
+        <button class="rural-window-close" onclick="closeUniversalMenu()">×</button>
+      </div>
+
+      <div class="rural-window-body">
+        <div class="rural-window-top">
+          <div class="rural-window-total">
+            Tempo Total: <strong id="universal-total-time">0m</strong>
+          </div>
+        </div>
+
+        <div id="universal-subcards-grid" class="rural-cards-grid"></div>
+
+        <div class="rural-window-footer">
+          <button class="rural-add-btn" onclick="openUniversalCreateModal()">
+            <span class="plus">+</span> Criar Novo Subcard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- MODAL: Criar Subcard -->
+<div id="universal-create-modal" class="modal-overlay" style="display:none; z-index: 999999;">
+  <div class="paper-window" style="width:360px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> Novo Subcard</h3>
+      <button class="close-modal-btn" id="btn-universal-create-close">✖</button>
+    </div>
+
+    <div class="modal-body">
+      <label class="input-label">Nome</label>
+      <div class="input-wrapper">
+        <input id="universal-create-name" type="text" maxlength="20" autocomplete="off" />
+      </div>
+
+      <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+        <button class="btn-rural small" id="btn-universal-icon-pick">
+          Escolher imagem
+        </button>
+        <span id="universal-create-img-status" style="font-size:0.75rem; color:var(--text-gray);">Nenhuma</span>
+      </div>
+
+      <input id="universal-create-icon" type="file" accept="image/*" style="display:none;" />
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-rural confirm" id="btn-universal-create-confirm">Criar</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- APP -->
+  <div class="main-content">
+    <div class="panels-row">
+
+      <!-- TIMER PANEL -->
+      <div class="rural-panel timer-panel">
+        <img id="timer-bg-img" class="timer-bg-art" src="" style="display:none;">
+        <div class="tabs-scroll-container" id="tabs-wrapper">
+          <button class="pill-tab" onclick="openStudyMenu()" id="tab-estudo">
+            <i class="fas fa-book"></i>Estudo Total
+          </button>
+          <button class="pill-tab" data-mode="anime" onclick="switchMode('anime')">
+            <i class="fas fa-coffee"></i>Anime
+          </button>
+          <button class="pill-tab-add" onclick="openModal()"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="timer-body">
+          <div class="timer-circle-outer">
+            <div class="timer-circle-inner">
+              <h1 id="timer" contenteditable="true" spellcheck="false">50:00</h1>
+              <span class="timer-label">Editar</span>
+            </div>
+          </div>
+
+          <div class="timer-controls-row">
+            <button class="ctrl-btn-small" onclick="adjustTime(-5)">-5</button>
+            <button class="ctrl-btn-main" id="start-btn" onclick="toggleTimer()">Começar</button>
+            <button class="ctrl-btn-pill" onclick="resetTimer()">Reset</button>
+            <button class="ctrl-btn-small" onclick="adjustTime(5)">+5</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIARY PANEL -->
+      <div class="rural-panel diary-panel">
+        <div class="diary-header">
+          <div class="diary-title"><i class="fas fa-book"></i> Diário</div>
+          <div class="diary-date-display" id="header-realtime">...</div>
+        </div>
+
+        <div class="month-pill-wrapper">
+          <button id="btn-month-selector" class="month-pill">
+            <i class="far fa-calendar"></i>
+            <span id="current-month-label">Janeiro</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+
+          <div id="calendar-popup" class="calendar-popup paper-window" style="display:none;">
+            <div class="cal-header">
+              <button id="btn-cal-prev"><i class="fas fa-chevron-left"></i></button>
+              <span id="cal-year-display">2026</span>
+              <button id="btn-cal-next"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="cal-grid-months"></div>
+          </div>
+        </div>
+
+        <div class="week-grid">
+          <button class="week-day-btn" onclick="selectDay(1)" data-day="1">Seg</button>
+          <button class="week-day-btn" onclick="selectDay(2)" data-day="2">Ter</button>
+          <button class="week-day-btn" onclick="selectDay(3)" data-day="3">Qua</button>
+          <button class="week-day-btn" onclick="selectDay(4)" data-day="4">Qui</button>
+          <button class="week-day-btn" onclick="selectDay(5)" data-day="5">Sex</button>
+          <button class="week-day-btn" onclick="selectDay(6)" data-day="6">Sáb</button>
+          <button class="week-day-btn active" onclick="selectDay(0)" data-day="0">Dom</button>
+        </div>
+
+        <div class="panel-content-scrollable">
+          <div class="logs-area">
+            <ul id="log-list" class="log-list-clean"></ul>
+          </div>
+
+          <div class="diary-footer">
+            <div id="daily-stats-content" class="daily-chips"></div>
+
+            <div class="stats-bars-container">
+              <div class="stat-bar-row">
+                <span class="sb-label">Eps: <strong id="stat-episodes">0</strong></span>
+                <span class="sb-label">Streak: <strong id="stat-streak">0</strong></span>
+              </div>
+              <div class="stat-bar-row green-tint">
+                <span class="sb-label">Estudo: <strong id="stat-total-estudo">0h</strong></span>
+                <span class="sb-label">Anime: <strong id="stat-total-anime">0h</strong></span>
+              </div>
+            </div>
+
+            <div id="stats-list-dynamic" class="cards-grid"></div>
+
+            <div class="footer-actions">
+              <button class="pill-action" onclick="clearMonthHistory()"><i class="fas fa-eraser"></i> Mês</button>
+              <button class="pill-action danger" onclick="clearAllHistory()"><i class="fas fa-trash"></i> Tudo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANIME PANEL -->
+      <div class="rural-panel anime-panel">
+        <div class="diary-header">
+          <div class="diary-title"><i class="fas fa-tv"></i> Conteúdos</div>
+          <button class="btn-rural small" onclick="openAnimeForm()" style="padding:2px 8px; font-size:0.75rem;">+ Novo</button>
+        </div>
+
+        <div class="panel-content-scrollable">
+          <div class="anime-list-area">
+            <ul id="anime-list-ul" class="anime-list-ul"></ul>
+          </div>
+        </div>
+
+        <div class="anime-footer">
+          <div class="anime-stat">
+            <span>Itens:</span> <strong id="stat-total-animes">0</strong>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <audio id="alarm-sound" src=""></audio>
+  <script src="renderer.js"></script>
+
+</body>
+</html>

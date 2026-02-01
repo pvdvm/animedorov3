@@ -1,0 +1,4241 @@
+/* ==========================================================================
+   PREPARAÇÃO PARA LAYOUTS RADICAIS (GRID AREAS)
+   ========================================================================== */
+
+/* Define nomes para as áreas principais do layout atual */
+.tabs-wrapper { grid-area: navigation; }
+.timer-display-container { grid-area: timer-display; } /* O relógio gigante */
+.controls-container { grid-area: timer-controls; } /* Botões Começar/Zerar */
+.stats-quick-bar { grid-area: quick-stats; } /* A barra de input de tempo manual */
+
+/* Painéis Principais */
+.left-panel { grid-area: panel-left; }
+.right-panel { grid-area: panel-right; }
+
+/* Garante que modais fiquem sempre por cima de qualquer layout louco */
+.modal-overlay, .calendar-popup {
+    z-index: 9999 !important;
+}
+
+
+/* ================= SISTEMA DE VARIÁVEIS ================= */
+:root {
+    --font-ui: 'Kosugi Maru', sans-serif;
+    --font-timer: 'Sawarabi Mincho', serif;
+
+    /* --- CONTROLE DE OPA CIDADE (Slider) --- */
+    --panel-alpha: 0.95; 
+
+    /* --- BORDAS (Slider) --- */
+    --radius-panel: 10px;
+
+    /* ================= MODO CLARO (PADRÃO) ================= */
+    --panel-rgb: 255, 255, 255; /* Painel Branco */
+    
+    --primary-green: #6a9c58;   /* Cor Principal (Botões/Ícones) */
+    --bg-green-soft: #f0f8f0;   /* Fundo de listas/itens */
+    --text-brown: #5c4b41;      /* Texto Principal */
+    --text-gray: #888888;       /* Texto Secundário */
+    --border-soft: #ccc;        /* Bordas */
+    --active-brown: #6d5e53;    /* Scrollbar/Abas Ativas */
+    --accent-red: #d97575;      /* Erro/Remover */
+}
+
+/* ================= MODO DARK (REFEITO) ================= */
+/* Aplica-se aos painéis, mantendo o wallpaper original */
+/* ============================================================
+   DARK MODE MODERN DEEP (ATIVADO APENAS VIA BOTÃO)
+   ============================================================ */
+
+/* 1. VARIÁVEIS DE COR (SÓ ATIVAM COM A CLASSE .dark-mode) */
+body.dark-mode {
+    /* Fundo dos Painéis: Cinza Azulado Escuro e Fosco */
+    --panel-rgb: 22, 24, 29; 
+    
+    /* Fundo de Listas/Inputs: Quase preto para profundidade */
+    --bg-green-soft: #0f1115; 
+    
+    /* Texto Principal: Branco Suave (Off-white) */
+    --text-brown: #e0e0e0; 
+    
+    /* Texto Secundário: Cinza Médio */
+    --text-gray: #9499a8; 
+    
+    /* Bordas: Sutis e escuras */
+    --border-soft: #2f333d; 
+    
+    /* Scrollbar/Abas Ativas */
+    --active-brown: #4b5563; 
+    
+    /* Destaque (Verde): Tom "Menta" para brilhar no escuro */
+    --primary-green: #66bb6a; 
+    
+    /* Acentos de Erro */
+    --accent-red: #ef5350;
+}
+
+/* 2. CORREÇÃO DE INTERFACE ESPECÍFICA PARA DARK MODE */
+/* Estas regras forçam os elementos a obedecerem as variáveis acima */
+
+
+
+/* Inputs e Textareas (Fundo preto, borda sutil) */
+body.dark-mode .input-wrapper {
+    background-color: #050505 !important;
+    border-color: var(--border-soft);
+}
+body.dark-mode input, 
+body.dark-mode textarea {
+    color: #fff !important;
+}
+body.dark-mode .input-wrapper:focus-within {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 8px rgba(102, 187, 106, 0.15);
+}
+
+/* Botões Pequenos e Pílulas (Transparentes com borda) */
+body.dark-mode .btn-rural,
+body.dark-mode .ctrl-btn-small, 
+body.dark-mode .ctrl-btn-pill {
+    background-color: transparent;
+    border: 1px solid var(--border-soft);
+    color: var(--text-brown);
+}
+
+body.dark-mode .btn-rural:hover,
+body.dark-mode .ctrl-btn-small:hover, 
+body.dark-mode .ctrl-btn-pill:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+}
+
+/* Abas do Timer (Pill Tabs) */
+body.dark-mode .pill-tab {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-gray);
+}
+body.dark-mode .pill-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+body.dark-mode .pill-tab.active {
+    background: var(--primary-green);
+    color: #1a1a1a; /* Texto escuro para contraste no verde */
+}
+
+/* Cards de Estatísticas e Headers de Anime */
+body.dark-mode .stat-card-simple,
+body.dark-mode .anime-header,
+body.dark-mode .log-item-clean,
+body.dark-mode .anime-child-item {
+    border-color: var(--border-soft);
+}
+
+body.dark-mode .stat-card-simple {
+    background: rgba(255, 255, 255, 0.02);
+}
+body.dark-mode .stat-card-simple:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary-green);
+}
+
+/* Círculo do Timer */
+body.dark-mode .timer-circle-outer {
+    border-color: var(--border-soft);
+    background: radial-gradient(circle, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0) 70%);
+}
+
+/* Janelas Modais */
+body.dark-mode .paper-window {
+    background-color: var(--panel-rgb); /* Garante o fundo cinza */
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    background-color: rgba(0,0,0,0.3); /* Cabeçalho mais escuro que o corpo */
+    border-color: var(--border-soft);
+}
+
+/* Rodapé do Anime */
+body.dark-mode .anime-footer {
+    background-color: rgba(0,0,0,0.3);
+    border-top: 1px solid var(--border-soft);
+}
+/* ================= PREPARAÇÃO DA COR FINAL ================= */
+/* Monta a cor do painel com a transparência do slider */
+:root, body {
+    --panel-bg: rgba(var(--panel-rgb), var(--panel-alpha));
+}
+
+/* ================= ESTRUTURA GERAL ================= */
+body {
+    margin: 0; font-family: var(--font-ui); color: var(--text-brown);
+    height: 100vh; overflow: hidden;
+    background: url('https://i.imgur.com/P4354.jpg') no-repeat center center fixed;
+    background-size: cover;
+    transition: color 0.3s ease; /* Transição suave de cor de texto */
+}
+
+/* BARRA SUPERIOR */
+.top-bar {
+    width: 100%; height: 40px; 
+    background: var(--panel-bg);
+    border-bottom: 1px dashed var(--border-soft);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 15px; box-sizing: border-box; backdrop-filter: blur(5px);
+    position: fixed; top: 0; left: 0; z-index: 100;
+    transition: background 0.3s, border-color 0.3s;
+}
+.top-title { font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.nature-icon { color: var(--primary-green); }
+.top-controls button {
+    background: transparent; border: none; width: 30px; height: 30px; border-radius: 50%;
+    cursor: pointer; font-size: 0.9rem; color: var(--text-brown); margin-left: 2px;
+    transition: 0.2s; display: inline-flex; align-items: center; justify-content: center;
+}
+.top-controls button:hover { background: var(--bg-green-soft); color: var(--primary-green); }
+
+/* LAYOUT PRINCIPAL */
+.main-content { height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 40px; }
+.panels-row { display: flex; gap: 15px; width: 95%; max-width: 1100px; height: 85vh; }
+
+/* PAINEL GENÉRICO (Fundo Dark/Light aqui) */
+.rural-panel {
+    background: var(--panel-bg); 
+    border-radius: var(--radius-panel);
+    backdrop-filter: blur(10px); 
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15); /* Sombra mais forte */
+    border: 1px solid var(--border-soft); 
+    display: flex; flex-direction: column;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+/* --- TIMER PANEL --- */
+.timer-panel { flex: 0.8; position: relative; padding: 15px; min-width: 280px; }
+.timer-bg-art { position: absolute; bottom: 0; right: 0; height: 160px; opacity: 0.8; pointer-events: none; z-index: 0; }
+
+.tabs-scroll-container { display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 20px; z-index: 2; position: relative; cursor: grab; scrollbar-width: none; }
+.tabs-scroll-container:active { cursor: grabbing; }
+
+.pill-tab { 
+    background: rgba(128, 128, 128, 0.1); /* Neutro */
+    border: 1px solid transparent; 
+    padding: 6px 12px; border-radius: 8px 8px 0 0; 
+    cursor: pointer; flex-shrink: 0; font-size: 0.85rem; 
+    color: var(--text-gray); font-weight: bold; 
+    display: flex; align-items: center; gap: 6px; transition: 0.2s; 
+}
+.pill-tab:hover { background: rgba(128, 128, 128, 0.2); }
+.pill-tab.active { 
+    background: var(--active-brown); /* Usa a cor ativa do tema */
+    color: #fff; 
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1); 
+}
+.pill-tab.disabled-tab { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
+.pill-tab-add { background: transparent; border: 1px dashed var(--border-soft); border-radius: 8px; color: var(--text-gray); cursor: pointer; padding: 0 10px; height: 30px; }
+.pill-tab-add:hover { color: var(--primary-green); border-color: var(--primary-green); }
+
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+.timer-circle-outer { 
+    width: 220px; height: 220px; 
+    border: 2px solid var(--text-brown); border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    background: rgba(128,128,128,0.05); margin-bottom: 25px; 
+}
+.timer-circle-inner { 
+    width: 200px; height: 200px; 
+    background: var(--panel-bg); /* Fundo do painel */
+    border-radius: 50%; display: flex; flex-direction: column; 
+    align-items: center; justify-content: center; 
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.05); 
+}
+/* No Dark Mode, sombra interna mais forte */
+body.dark-mode .timer-circle-inner { box-shadow: inset 0 0 30px rgba(0,0,0,0.5); }
+
+#timer { font-size: 3.2rem; font-family: var(--font-timer); margin: 0; color: var(--text-brown); cursor: pointer; outline: none; }
+#timer:focus { border-bottom: 2px solid var(--primary-green); }
+.timer-label { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+
+.timer-controls-row { display: flex; gap: 8px; align-items: center; }
+.ctrl-btn-small, .ctrl-btn-pill { 
+    border: 1px solid var(--border-soft); background: transparent; 
+    cursor: pointer; font-weight: bold; color: var(--text-brown); 
+    border-radius: 10px; transition: 0.2s;
+}
+.ctrl-btn-small { width: 35px; height: 35px; }
+.ctrl-btn-pill { padding: 8px 15px; }
+.ctrl-btn-small:hover, .ctrl-btn-pill:hover { border-color: var(--primary-green); color: var(--primary-green); }
+
+.ctrl-btn-main { 
+    background: var(--primary-green); color: #fff; border: none; 
+    padding: 10px 35px; border-radius: 10px; font-size: 1rem; 
+    cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.15); 
+    transition: transform 0.1s; 
+}
+.ctrl-btn-main:active { transform: translateY(2px); box-shadow: none; }
+
+/* --- DIARY PANEL --- */
+.diary-panel { flex: 1.2; display: flex; flex-direction: column; min-width: 450px; }
+.diary-header { display: flex; justify-content: space-between; padding: 10px 15px 5px; }
+.diary-title { font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.diary-date-display { font-size: 0.8rem; color: var(--text-gray); }
+
+.month-pill-wrapper { display: flex; justify-content: center; margin-bottom: 5px; position: relative; }
+.month-pill { 
+    background: transparent; border: 1px solid var(--border-soft); 
+    padding: 4px 15px; border-radius: 8px; cursor: pointer; 
+    font-weight: bold; color: var(--text-brown); font-size: 0.85rem; 
+    display: flex; align-items: center; gap: 8px;
+}
+.month-pill:hover { border-color: var(--primary-green); color: var(--primary-green); }
+
+.week-grid { 
+    display: flex; justify-content: space-between; 
+    border-top: 1px dashed var(--border-soft); 
+    border-bottom: 1px solid var(--active-brown); 
+    padding: 5px 15px; background: rgba(0,0,0,0.02); 
+}
+.week-day-btn { 
+    background: transparent; border: none; cursor: pointer; 
+    color: var(--text-gray); font-size: 0.8rem; padding: 4px 10px; border-radius: 5px; 
+}
+.week-day-btn:hover { background: var(--bg-green-soft); color: var(--text-brown); }
+.week-day-btn.active { background: var(--active-brown); color: #fff; font-weight: bold; }
+
+/* LOGS */
+.logs-area { 
+    height: 120px; flex: none; overflow-y: auto; 
+    background: rgba(0,0,0,0.02); 
+    border-bottom: 1px solid var(--border-soft); 
+    padding: 0; margin: 0; width: 100%; 
+}
+.log-list-clean { list-style: none; padding: 0; margin: 0; width: 100%; }
+.log-item-clean { 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 8px 15px; width: 100%; box-sizing: border-box; 
+    border-bottom: 1px dashed var(--border-soft); font-size: 0.8rem; 
+}
+.log-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.log-icon { color: var(--primary-green); width: 20px; text-align: center; flex-shrink: 0; }
+.log-info { display: flex; flex-direction: column; }
+.log-time-stamp { font-size: 0.7rem; color: var(--text-gray); }
+.log-name { font-weight: bold; color: var(--text-brown); }
+.log-plus { font-weight: bold; color: var(--text-brown); white-space: nowrap; }
+
+/* FOOTER */
+.diary-footer { flex: 1; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; }
+.daily-chips { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; min-height: 20px; }
+.chip { background: transparent; border: 1px solid var(--border-soft); padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; color: var(--text-brown); }
+
+.stats-bars-container { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; flex: none; }
+.stat-bar-row { 
+    background: var(--bg-green-soft); border-radius: var(--radius-panel); 
+    padding: 5px 15px; display: flex; justify-content: space-between; 
+    color: var(--text-brown); font-size: 0.8rem; border: 1px solid transparent; 
+}
+.stat-bar-row.green-tint { border-color: var(--primary-green); background: rgba(128, 128, 128, 0.05); }
+.sb-label strong { color: var(--primary-green); }
+
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.stat-card-simple { 
+    background: rgba(128,128,128,0.05); /* Fundo sutil */
+    border: 1px solid var(--border-soft); 
+    border-radius: var(--radius-panel); padding: 8px; text-align: center; 
+    transition: 0.2s; display: flex; flex-direction: column; 
+    align-items: center; justify-content: center; 
+    cursor: pointer; user-select: none; 
+}
+.stat-card-simple:hover { 
+    transform: translateY(-2px); border-color: var(--primary-green); 
+    background: var(--bg-green-soft); 
+}
+.sc-icon { font-size: 1rem; margin-bottom: 2px; }
+.sc-label { font-size: 0.65rem; color: var(--text-gray); text-transform: uppercase; font-weight: bold; }
+.sc-val { font-size: 1rem; font-weight: bold; color: var(--text-brown); }
+
+.footer-actions { margin-top: auto; display: flex; justify-content: flex-end; padding-top: 10px; }
+.pill-action { 
+    background: transparent; border: 1px solid var(--border-soft); 
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; 
+    font-size: 0.75rem; color: var(--text-brown); margin-left: 5px; 
+    display: flex; align-items: center; gap: 5px; 
+}
+.pill-action:hover { background: var(--bg-green-soft); border-color: var(--text-brown); }
+.pill-action.danger:hover { color: #fff; background: var(--accent-red); border-color: var(--accent-red); }
+
+/* --- JANELAS FLUTUANTES --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; }
+.paper-window { 
+    background: var(--panel-bg); 
+    border: 2px solid var(--border-soft); 
+    border-radius: var(--radius-panel); 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+    width: 400px; max-width: 90%; overflow: hidden; position: relative; animation: fadeScale 0.2s ease-out; 
+}
+@keyframes fadeScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal-header { background: var(--bg-green-soft); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-soft); }
+.modal-header h3 { margin: 0; font-size: 1rem; color: var(--text-brown); text-transform: uppercase; letter-spacing: 1px; }
+.close-modal-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 1.1rem; }
+.modal-body { padding: 20px; }
+.setting-block { margin-bottom: 20px; }
+.setting-title { display: block; font-size: 0.85rem; font-weight: bold; color: var(--text-brown); margin-bottom: 8px; border-left: 3px solid var(--primary-green); padding-left: 8px; }
+.modal-footer { padding: 15px; text-align: center; border-top: 1px solid var(--border-soft); background: rgba(0,0,0,0.02); }
+
+/* MODO BOTOES */
+.mode-selector-row { display: flex; gap: 10px; }
+.mode-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mode-btn.active { background: var(--primary-green); color: #fff; border-color: var(--primary-green); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+/* INPUT TEXT */
+.input-wrapper { border: 1px solid var(--border-soft); background: var(--bg-green-soft); border-radius: 6px; padding: 8px; }
+.input-wrapper input { width: 100%; border: none; outline: none; background: transparent; color: var(--text-brown); font-family: var(--font-ui); }
+
+/* THEME SELECTOR */
+.theme-selector, .special-themes-grid { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.theme-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.theme-btn.theme-default { background-color: #6a9c58; }
+.theme-btn.theme-darkgreen { background-color: #2e7d32; }
+.theme-btn.theme-sakura { background-color: #ff9aa2; }
+.theme-btn.theme-river { background-color: #26c6da; }
+.theme-btn.theme-autumn { background-color: #ef6c00; }
+
+/* SLIDER */
+.styled-range { -webkit-appearance: none; width: 100%; background: transparent; }
+.styled-range::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--primary-green); cursor: pointer; margin-top: -6px; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.styled-range::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border-soft); border-radius: 2px; }
+
+/* CALENDÁRIO */
+.calendar-popup { position: absolute; top: 45px; left: 50%; transform: translateX(-50%); background: var(--panel-bg); border: 2px solid var(--active-brown); border-radius: var(--radius-panel); padding: 15px; z-index: 150; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+.cal-grid-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.cal-month-btn { padding: 12px 5px; background: transparent; border: 1px dashed var(--border-soft); border-radius: var(--radius-panel); cursor: pointer; color: var(--text-brown); font-size: 0.85rem; font-weight: bold; font-family: var(--font-ui); transition: 0.2s; text-align: center; }
+.cal-month-btn:hover { background: var(--bg-green-soft); border-color: var(--primary-green); border-style: solid; transform: translateY(-2px); }
+.cal-month-btn.active { background: var(--active-brown); color: #fff; border-style: solid; border-color: var(--active-brown); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--active-brown); border-radius: 3px; transition: background 0.3s; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-green); }
+
+/* ... (Mantenha as variáveis :root, dark-mode, paletas e estrutura geral IGUAIS ao anterior) ... */
+
+/* ... (Pule para a parte de JANELAS E MODAIS) ... */
+
+/* JANELAS E MODAIS */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+}
+.paper-window {
+    background: var(--panel-bg);
+    border: 2px solid var(--border-soft);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    width: 400px; max-width: 90%;
+    overflow: hidden; position: relative;
+    animation: fadeScale 0.2s ease-out;
+}
+@keyframes fadeScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal-header {
+    background: var(--bg-green-soft); padding: 15px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px dashed var(--border-soft);
+}
+.modal-header h3 { margin: 0; font-size: 1rem; color: var(--text-brown); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+.close-modal-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 1.1rem; transition: 0.2s; }
+.close-modal-btn:hover { color: var(--accent-red); transform: scale(1.1); }
+
+.modal-body { padding: 25px 20px; }
+.input-label { display: block; font-size: 0.85rem; font-weight: bold; color: var(--text-brown); margin-bottom: 8px; }
+
+/* INPUT DE TEXTO MELHORADO */
+.input-wrapper { 
+    border: 2px solid var(--border-soft); 
+    background: var(--bg-green-soft); 
+    border-radius: 8px; 
+    padding: 10px; 
+    transition: 0.3s;
+}
+.input-wrapper:focus-within { border-color: var(--primary-green); }
+.input-wrapper input { 
+    width: 100%; border: none; outline: none; 
+    background: transparent; 
+    color: var(--text-brown); 
+    font-family: var(--font-ui); 
+    font-size: 1rem; font-weight: bold;
+}
+
+.modal-footer { 
+    padding: 20px; text-align: center; 
+    border-top: 2px dashed var(--border-soft); 
+    background: var(--bg-green-soft); /* Fundo igual ao header para consistência */
+}
+
+/* BOTÃO DE CONFIRMAR (CORRIGIDO) */
+.btn-rural.confirm { 
+    background: var(--primary-green); /* Usa a cor do tema */
+    color: #fff; /* Texto sempre branco */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    border: none;
+    font-size: 0.95rem;
+    padding: 10px 40px;
+    transition: all 0.2s ease;
+}
+.btn-rural.confirm:hover { 
+    filter: brightness(1.1); /* Clareia levemente no hover */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+.btn-rural.confirm:active { transform: translateY(1px); box-shadow: none; }
+
+/* ... (Mantenha o resto do CSS: Settings Block, Calendario, Layout Principal, etc. igual ao anterior) ... */
+.setting-block { margin-bottom: 20px; }
+.setting-title { display: block; font-size: 0.85rem; font-weight: bold; color: var(--text-brown); margin-bottom: 8px; border-left: 3px solid var(--primary-green); padding-left: 8px; }
+.btn-rural { padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: var(--font-ui); border: 1px solid transparent; transition: 0.2s; }
+.btn-rural.small { padding: 5px 15px; font-size: 0.8rem; background: #fff; border: 1px solid var(--border-soft); color: var(--text-brown); }
+.btn-rural.small:hover { border-color: var(--primary-green); color: var(--primary-green); }
+.btn-rural.danger { color: var(--accent-red); border-color: var(--accent-red); }
+.btn-rural.danger:hover { background: var(--accent-red); color: #fff; }
+.styled-range { -webkit-appearance: none; width: 100%; background: transparent; }
+.styled-range::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--primary-green); cursor: pointer; margin-top: -6px; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.styled-range::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border-soft); border-radius: 2px; }
+.calendar-popup { position: absolute; top: 45px; left: 50%; transform: translateX(-50%); background: var(--panel-bg); border: 2px solid var(--active-brown); border-radius: var(--radius-panel); padding: 15px; z-index: 150; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+.cal-grid-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.cal-month-btn { padding: 12px 5px; background: var(--panel-bg); border: 1px dashed var(--border-soft); border-radius: var(--radius-panel); cursor: pointer; color: var(--text-brown); font-size: 0.85rem; font-weight: bold; font-family: var(--font-ui); transition: 0.2s; text-align: center; }
+.cal-month-btn:hover { background: var(--bg-green-soft); border-color: var(--primary-green); border-style: solid; transform: translateY(-2px); }
+.cal-month-btn.active { background: var(--active-brown); color: #fff; border-style: solid; border-color: var(--active-brown); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.main-content { height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 40px; }
+.panels-row { display: flex; gap: 15px; width: 95%; max-width: 1100px; height: 85vh; }
+.rural-panel { background: var(--panel-bg); border-radius: var(--radius-panel); backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid var(--border-soft); display: flex; flex-direction: column; }
+.timer-panel { flex: 0.8; position: relative; padding: 15px; min-width: 280px; }
+.timer-bg-art { position: absolute; bottom: 0; right: 0; height: 160px; opacity: 0.8; pointer-events: none; z-index: 0; }
+.tabs-scroll-container { display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 20px; z-index: 2; position: relative; cursor: grab; scrollbar-width: none; }
+.tabs-scroll-container::-webkit-scrollbar { display: none; }
+.tabs-scroll-container:active { cursor: grabbing; }
+.pill-tab { background: rgba(255,255,255,0.4); border: 1px solid transparent; padding: 6px 12px; border-radius: 8px 8px 0 0; cursor: pointer; flex-shrink: 0; font-size: 0.85rem; color: var(--text-gray); font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+.pill-tab:hover { background: rgba(255,255,255,0.7); }
+body.dark-mode .pill-tab { background: rgba(0,0,0,0.2); }
+body.dark-mode .pill-tab:hover { background: rgba(0,0,0,0.4); }
+.pill-tab.active { background: var(--active-brown); color: #fff; box-shadow: 0 -2px 5px rgba(0,0,0,0.05); } 
+.pill-tab.disabled-tab { opacity: 0.5; pointer-events: none; filter: grayscale(100%); }
+.pill-tab-add { background: transparent; border: 1px dashed var(--border-soft); border-radius: 8px; color: var(--text-gray); cursor: pointer; padding: 0 10px; height: 30px; }
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+.timer-circle-outer { width: 220px; height: 220px; border: 2px solid var(--text-brown); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); margin-bottom: 25px; }
+.timer-circle-inner { width: 200px; height: 200px; background: var(--panel-bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); }
+#timer { font-size: 3.2rem; font-family: var(--font-timer); margin: 0; color: var(--text-brown); cursor: pointer; outline: none; }
+#timer:focus { border-bottom: 2px solid var(--primary-green); }
+.timer-label { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+.timer-controls-row { display: flex; gap: 8px; align-items: center; }
+.ctrl-btn-small { width: 35px; height: 35px; border-radius: 10px; border: 1px solid var(--border-soft); background: transparent; cursor: pointer; font-weight: bold; color: var(--text-brown); }
+.ctrl-btn-pill { padding: 8px 15px; border-radius: 10px; border: 1px solid var(--border-soft); background: transparent; cursor: pointer; font-weight: bold; color: var(--text-brown); }
+.ctrl-btn-main { background: var(--primary-green); color: #fff; border: none; padding: 10px 35px; border-radius: 10px; font-size: 1rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.1); transition: transform 0.1s; }
+.ctrl-btn-main:active { transform: translateY(2px); box-shadow: none; }
+.diary-panel { flex: 1.2; display: flex; flex-direction: column; min-width: 450px; }
+.diary-header { display: flex; justify-content: space-between; padding: 10px 15px 5px; }
+.diary-title { font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.diary-date-display { font-size: 0.8rem; color: var(--text-gray); }
+.month-pill-wrapper { display: flex; justify-content: center; margin-bottom: 5px; position: relative; }
+.month-pill { background: transparent; border: 1px solid var(--border-soft); padding: 4px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; color: var(--text-brown); display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+.week-grid { display: flex; justify-content: space-between; border-top: 1px dashed var(--border-soft); border-bottom: 1px solid var(--active-brown); padding: 5px 15px; background: rgba(0,0,0,0.02); }
+.week-day-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 0.8rem; padding: 4px 10px; border-radius: 5px; }
+.week-day-btn.active { background: var(--active-brown); color: #fff; font-weight: bold; }
+.logs-area { height: 120px; flex: none; overflow-y: auto; background: rgba(0,0,0,0.01); border-bottom: 1px solid var(--border-soft); padding: 0; margin: 0; width: 100%; }
+.log-list-clean { list-style: none; padding: 0; margin: 0; width: 100%; }
+.log-item-clean { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; width: 100%; box-sizing: border-box; border-bottom: 1px dashed var(--border-soft); font-size: 0.8rem; }
+.log-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.log-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.log-info { display: flex; flex-direction: column; }
+.log-time-stamp { font-size: 0.7rem; color: var(--text-gray); }
+.log-name { font-weight: bold; color: var(--text-brown); }
+.log-plus { font-weight: bold; color: var(--text-brown); white-space: nowrap; }
+.diary-footer { flex: 1; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; }
+.daily-chips { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; min-height: 20px; }
+.stats-bars-container { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; flex: none; }
+.stat-bar-row { background: var(--bg-green-soft); border-radius: var(--radius-panel); padding: 5px 15px; display: flex; justify-content: space-between; color: var(--text-brown); font-size: 0.8rem; border: 1px solid transparent; }
+.stat-bar-row.green-tint { border-color: var(--primary-green); background: rgba(106, 156, 88, 0.1); }
+.sb-label strong { color: var(--primary-green); }
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.stat-card-simple { background: rgba(255,255,255,0.5); border: 1px solid var(--border-soft); border-radius: var(--radius-panel); padding: 8px; text-align: center; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
+body.dark-mode .stat-card-simple { background: rgba(255,255,255,0.05); }
+.stat-card-simple:hover { transform: translateY(-2px); border-color: var(--primary-green); background: var(--bg-green-soft); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+.sc-icon { font-size: 1rem; margin-bottom: 2px; }
+.sc-label { font-size: 0.65rem; color: var(--text-gray); text-transform: uppercase; font-weight: bold; }
+.sc-val { font-size: 1rem; font-weight: bold; color: var(--text-brown); }
+.footer-actions { margin-top: auto; display: flex; justify-content: flex-end; padding-top: 10px; }
+.pill-action { background: transparent; border: 1px solid var(--border-soft); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.75rem; color: var(--text-brown); margin-left: 5px; display: flex; align-items: center; gap: 5px; }
+.pill-action:hover { background: var(--bg-green-soft); }
+.theme-selector, .special-themes-grid { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.theme-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.theme-btn.theme-default { background-color: #6a9c58; }
+.theme-btn.theme-darkgreen { background-color: #2e7d32; }
+.theme-btn.theme-sakura { background-color: #ff9aa2; }
+.theme-btn.theme-river { background-color: #4ecdc4; }
+.theme-btn.theme-autumn { background-color: #e67e22; }
+.mode-selector-row { display: flex; gap: 10px; }
+.mode-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mode-btn.active { background: var(--primary-green); color: #fff; border-color: var(--primary-green); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--active-brown); border-radius: 3px; transition: background 0.3s; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-green); }
+
+/* ... (Todo o CSS anterior) ... */
+
+/* Estilo para o texto do modal de confirmação */
+.confirm-message {
+    font-size: 0.95rem;
+    color: var(--text-brown);
+    text-align: center;
+    line-height: 1.5;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+/* ... (Todo o CSS da resposta anterior) ... */
+
+/* Estilo para o texto do modal de confirmação e alerta */
+.confirm-message {
+    font-size: 0.95rem;
+    color: var(--text-brown);
+    text-align: center;
+    line-height: 1.5;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+/* SWITCH TOGGLE PARA BACKUP */
+.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-brown); font-weight: bold; }
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: var(--primary-green); }
+input:checked + .slider:before { transform: translateX(20px); }
+.slider.round { border-radius: 20px; }
+.slider.round:before { border-radius: 50%; }
+
+/* NOVA PALETA: ABISMO (Azul Escuro, Vermelho, Roxo, Preto) */
+body.theme-abyss { 
+    --panel-rgb: 15, 15, 25; /* Quase preto azulado */
+    --primary-green: #ff0055; /* Vermelho/Rosa Neon */
+    --bg-green-soft: #0a0a10; 
+    --text-brown: #e0e0ff;
+    --text-gray: #707090;
+    --border-soft: #300040; /* Roxo escuro */
+    --active-brown: #6a0dad; /* Roxo */
+    --accent-red: #ff0000;
+}
+
+
+
+/* LAYOUT 3 COLUNAS */
+.main-content { height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 40px; }
+.panels-row { 
+    display: flex; gap: 15px; width: 98%; max-width: 1300px; height: 85vh; 
+    /* Ajuste para 3 colunas */
+}
+.rural-panel { background: var(--panel-bg); border-radius: var(--radius-panel); backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.1); border: 1px solid var(--border-soft); display: flex; flex-direction: column; }
+
+/* TIMER (Esq) */
+.timer-panel { flex: 0.8; min-width: 260px; padding: 15px; position: relative; }
+/* DIARY (Meio) */
+.diary-panel { flex: 1; min-width: 350px; }
+/* ANIME (Dir) */
+.anime-panel { flex: 1; min-width: 300px; display: flex; flex-direction: column; }
+
+/* CUSTOMIZAÇÃO ANIME LIST */
+.anime-list-area { flex: 1; overflow-y: auto; padding: 0; }
+.anime-list-ul { list-style: none; padding: 0; margin: 0; }
+
+.anime-item { border-bottom: 1px solid var(--border-soft); }
+.anime-header {
+    padding: 10px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    transition: 0.2s; background: rgba(0,0,0,0.01);
+}
+.anime-header:hover { background: var(--bg-green-soft); }
+.anime-title-row { font-weight: bold; font-size: 0.9rem; display: flex; gap: 10px; align-items: center; }
+.anime-rating-mini { font-size: 0.7rem; color: #ffca28; }
+
+.anime-details {
+    display: none; /* Retraído por padrão */
+    padding: 15px; background: var(--bg-green-soft);
+    border-top: 1px dashed var(--border-soft);
+    animation: slideDown 0.2s ease-out;
+}
+.anime-item.expanded .anime-details { display: flex; gap: 15px; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+.anime-thumb-wrapper { width: 80px; height: 110px; flex-shrink: 0; border-radius: 6px; overflow: hidden; border: 2px solid var(--border-soft); }
+.anime-thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.anime-info-col { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.anime-author { font-size: 0.75rem; color: var(--text-gray); }
+.anime-review { font-size: 0.8rem; font-style: italic; background: rgba(0,0,0,0.05); padding: 8px; border-radius: 6px; margin-top: 5px; }
+.anime-actions { margin-top: auto; display: flex; justify-content: flex-end; }
+
+/* MODAL ANIME FORM */
+.anime-form-grid { display: flex; gap: 15px; margin-bottom: 15px; }
+.anime-cover-upload {
+    width: 100px; height: 140px; background: var(--bg-green-soft); border: 2px dashed var(--border-soft);
+    border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden; position: relative; color: var(--text-gray); transition: 0.2s;
+}
+.anime-cover-upload:hover { border-color: var(--primary-green); color: var(--primary-green); }
+.anime-cover-upload img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+.anime-inputs { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.star-rating { font-size: 1.2rem; color: var(--border-soft); cursor: pointer; }
+.star-rating i.active { color: #ffca28; }
+
+/* RESTO DO CSS (Mantido) */
+.top-bar { width: 100%; height: 40px; background: var(--panel-bg); border-bottom: 1px dashed var(--border-soft); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; position: fixed; top: 0; left: 0; z-index: 100; }
+.top-title { font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.nature-icon { color: var(--primary-green); }
+.top-controls button { background: transparent; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; color: var(--text-brown); margin-left: 2px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+.top-controls button:hover { background: var(--bg-green-soft); color: var(--primary-green); }
+.timer-bg-art { position: absolute; bottom: 0; right: 0; height: 160px; opacity: 0.8; pointer-events: none; z-index: 0; }
+.tabs-scroll-container { display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 20px; z-index: 2; cursor: grab; }
+.pill-tab { background: rgba(128,128,128,0.1); border: 1px solid transparent; padding: 6px 12px; border-radius: 8px 8px 0 0; cursor: pointer; flex-shrink: 0; font-size: 0.85rem; color: var(--text-gray); font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+.pill-tab:hover { background: rgba(128,128,128,0.2); }
+.pill-tab.active { background: var(--active-brown); color: #fff; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+.pill-tab-add { background: transparent; border: 1px dashed var(--border-soft); border-radius: 8px; color: var(--text-gray); cursor: pointer; padding: 0 10px; height: 30px; }
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+.timer-circle-outer { width: 220px; height: 220px; border: 2px solid var(--text-brown); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(128,128,128,0.05); margin-bottom: 25px; }
+.timer-circle-inner { width: 200px; height: 200px; background: var(--panel-bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); }
+#timer { font-size: 3.2rem; font-family: var(--font-timer); margin: 0; color: var(--text-brown); cursor: pointer; outline: none; }
+.timer-label { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+.timer-controls-row { display: flex; gap: 8px; align-items: center; }
+.ctrl-btn-small, .ctrl-btn-pill { border: 1px solid var(--border-soft); background: transparent; cursor: pointer; font-weight: bold; color: var(--text-brown); border-radius: 10px; transition: 0.2s; }
+.ctrl-btn-small { width: 35px; height: 35px; } .ctrl-btn-pill { padding: 8px 15px; }
+.ctrl-btn-small:hover, .ctrl-btn-pill:hover { border-color: var(--primary-green); color: var(--primary-green); }
+.ctrl-btn-main { background: var(--primary-green); color: #fff; border: none; padding: 10px 35px; border-radius: 10px; font-size: 1rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.15); transition: transform 0.1s; }
+.diary-header { display: flex; justify-content: space-between; padding: 10px 15px 5px; }
+.diary-title { font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.diary-date-display { font-size: 0.8rem; color: var(--text-gray); }
+.month-pill-wrapper { display: flex; justify-content: center; margin-bottom: 5px; position: relative; }
+.month-pill { background: transparent; border: 1px solid var(--border-soft); padding: 4px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; color: var(--text-brown); display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+.week-grid { display: flex; justify-content: space-between; border-top: 1px dashed var(--border-soft); border-bottom: 1px solid var(--active-brown); padding: 5px 15px; background: rgba(0,0,0,0.02); }
+.week-day-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 0.8rem; padding: 4px 10px; border-radius: 5px; }
+.week-day-btn:hover { background: var(--bg-green-soft); color: var(--text-brown); }
+.week-day-btn.active { background: var(--active-brown); color: #fff; font-weight: bold; }
+.logs-area { height: 120px; flex: none; overflow-y: auto; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-soft); padding: 0; margin: 0; width: 100%; }
+.log-list-clean { list-style: none; padding: 0; margin: 0; width: 100%; }
+.log-item-clean { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; width: 100%; box-sizing: border-box; border-bottom: 1px dashed var(--border-soft); font-size: 0.8rem; }
+.log-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.log-icon { width: 20px; text-align: center; flex-shrink: 0; }
+.log-info { display: flex; flex-direction: column; }
+.log-time-stamp { font-size: 0.7rem; color: var(--text-gray); }
+.log-name { font-weight: bold; color: var(--text-brown); }
+.log-plus { font-weight: bold; color: var(--text-brown); white-space: nowrap; }
+.diary-footer { flex: 1; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; }
+.daily-chips { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; min-height: 20px; }
+.stats-bars-container { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; flex: none; }
+.stat-bar-row { background: var(--bg-green-soft); border-radius: var(--radius-panel); padding: 5px 15px; display: flex; justify-content: space-between; color: var(--text-brown); font-size: 0.8rem; border: 1px solid transparent; }
+.stat-bar-row.green-tint { border-color: var(--primary-green); background: rgba(128,128,128,0.05); }
+.sb-label strong { color: var(--primary-green); }
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.stat-card-simple { background: rgba(128,128,128,0.05); border: 1px solid var(--border-soft); border-radius: var(--radius-panel); padding: 8px; text-align: center; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
+.stat-card-simple:hover { transform: translateY(-2px); border-color: var(--primary-green); background: var(--bg-green-soft); }
+.sc-icon { font-size: 1rem; margin-bottom: 2px; }
+.sc-label { font-size: 0.65rem; color: var(--text-gray); text-transform: uppercase; font-weight: bold; }
+.sc-val { font-size: 1rem; font-weight: bold; color: var(--text-brown); }
+.footer-actions { margin-top: auto; display: flex; justify-content: flex-end; padding-top: 10px; }
+.pill-action { background: transparent; border: 1px solid var(--border-soft); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.75rem; color: var(--text-brown); margin-left: 5px; display: flex; align-items: center; gap: 5px; }
+.pill-action:hover { background: var(--bg-green-soft); border-color: var(--text-brown); }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; }
+.paper-window { background: var(--panel-bg); border: 2px solid var(--border-soft); border-radius: var(--radius-panel); box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 400px; max-width: 90%; overflow: hidden; position: relative; animation: fadeScale 0.2s ease-out; }
+.modal-header { background: var(--bg-green-soft); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--border-soft); }
+.modal-header h3 { margin: 0; font-size: 1rem; color: var(--text-brown); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+.close-modal-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 1.1rem; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 20px; text-align: center; border-top: 2px dashed var(--border-soft); background: var(--bg-green-soft); }
+.confirm-message { font-size: 0.95rem; color: var(--text-brown); text-align: center; line-height: 1.5; margin: 10px 0; font-weight: bold; }
+.input-label { display: block; font-size: 0.85rem; font-weight: bold; color: var(--text-brown); margin-bottom: 8px; }
+.input-wrapper { border: 2px solid var(--border-soft); background: var(--bg-green-soft); border-radius: 8px; padding: 10px; transition: 0.3s; }
+.input-wrapper:focus-within { border-color: var(--primary-green); }
+.input-wrapper input { width: 100%; border: none; outline: none; background: transparent; color: var(--text-brown); font-family: var(--font-ui); font-size: 1rem; font-weight: bold; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-brown); font-weight: bold; }
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: var(--primary-green); }
+input:checked + .slider:before { transform: translateX(20px); }
+.slider.round { border-radius: 20px; }
+.slider.round:before { border-radius: 50%; }
+.btn-rural.confirm { background: var(--primary-green); color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-size: 0.95rem; padding: 10px 40px; }
+.btn-rural.confirm:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.cal-nav-row { display: flex; align-items: center; gap: 20px; justify-content: center; width: 100%; }
+.cal-nav-row button { background: transparent; border: none; cursor: pointer; color: var(--text-brown); font-size: 1.1rem; }
+.cal-nav-row h3 { margin: 0; font-size: 1.2rem; min-width: 100px; text-align: center; color: var(--text-brown); }
+.year-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.month-card { background: var(--bg-green-soft); border: 1px solid var(--border-soft); border-radius: var(--radius-panel); padding: 15px 0; text-align: center; cursor: pointer; font-weight: bold; color: var(--text-brown); transition: 0.2s; }
+.month-card:hover { border-color: var(--primary-green); background: rgba(128,128,128,0.1); transform: translateY(-2px); }
+.month-card.active { background: var(--active-brown); color: #fff; border-color: var(--active-brown); }
+.days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 10px; }
+.day-header { text-align: center; font-size: 0.75rem; color: var(--text-gray); font-weight: bold; padding-bottom: 5px; }
+.day-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; border-radius: 50%; font-size: 0.9rem; color: var(--text-brown); border: 1px solid transparent; position: relative; transition: 0.2s; }
+.day-cell:hover { background: var(--bg-green-soft); border-color: var(--primary-green); }
+.day-cell.selected { background: var(--primary-green); color: #fff; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.day-cell.has-data::after { content: ''; display: block; width: 40%; height: 3px; background: var(--active-brown); border-radius: 2px; margin-top: 3px; }
+.day-cell.selected.has-data::after { background: #fff; }
+.theme-btn.theme-abyss { background-color: #1a1a2e; border-color: #ff0055; }
+
+
+/* ================= VARIÁVEIS ================= */
+:root {
+    --font-ui: 'Kosugi Maru', sans-serif;
+    --font-timer: 'Sawarabi Mincho', serif;
+    --panel-alpha: 0.95; 
+    --radius-panel: 10px;
+    --panel-rgb: 255, 255, 255; 
+    --primary-green: #6a9c58;
+    --bg-green-soft: #f0f8f0;
+    --text-brown: #5c4b41;
+    --text-gray: #888888;
+    --border-soft: #ccc;
+    --active-brown: #6d5e53;
+    --accent-red: #d97575;
+}
+body.dark-mode {
+    --panel-rgb: 30, 32, 40; 
+    --bg-green-soft: #262833; 
+    --text-brown: #eef1f5; 
+    --text-gray: #9499b8; 
+    --border-soft: #444a5e; 
+    --active-brown: #7aa2f7; 
+    --accent-red: #ff5c5c;
+    --primary-green: #a9b1d6; 
+}
+body.theme-abyss { 
+    --panel-rgb: 15, 15, 25; 
+    --primary-green: #ff0055; 
+    --bg-green-soft: #0a0a10; 
+    --text-brown: #e0e0ff;
+    --text-gray: #707090;
+    --border-soft: #300040; 
+    --active-brown: #6a0dad; 
+    --accent-red: #ff0000;
+}
+.theme-btn.theme-abyss { background-color: #1a1a2e; border-color: #ff0055; }
+/* Outras paletas (simplificadas para economizar espaço visual, mas mantenha as originais se quiser) */
+body.theme-darkgreen { --primary-green: #2e7d32; --active-brown: #5d4037; --bg-green-soft: #e8f5e9; }
+body.dark-mode.theme-darkgreen { --primary-green: #66bb6a; --bg-green-soft: #1a2e1a; }
+body.theme-sakura { --primary-green: #ff80ab; --active-brown: #ff4081; --bg-green-soft: #fff0f5; }
+body.dark-mode.theme-sakura { --primary-green: #ff80ab; --bg-green-soft: #2e1a20; }
+body.theme-river { --primary-green: #00bcd4; --active-brown: #0097a7; --bg-green-soft: #e0f7fa; }
+body.dark-mode.theme-river { --primary-green: #26c6da; --bg-green-soft: #1a252e; }
+body.theme-autumn { --primary-green: #ff9800; --active-brown: #e65100; --bg-green-soft: #fff3e0; }
+body.dark-mode.theme-autumn { --primary-green: #ffb74d; --bg-green-soft: #2e201a; }
+
+
+
+.top-bar { width: 100%; height: 40px; background: var(--panel-bg); border-bottom: 1px dashed var(--border-soft); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; position: fixed; top: 0; left: 0; z-index: 100; }
+.top-title { font-weight: bold; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+.nature-icon { color: var(--primary-green); }
+.top-controls button { background: transparent; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; color: var(--text-brown); margin-left: 2px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+.top-controls button:hover { background: var(--bg-green-soft); color: var(--primary-green); }
+
+/* LAYOUT 3 COLUNAS */
+.main-content { height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 40px; }
+.panels-row { display: flex; gap: 15px; width: 95%; max-width: 1400px; height: 85vh; }
+.rural-panel { background: var(--panel-bg); border-radius: var(--radius-panel); backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.15); border: 1px solid var(--border-soft); display: flex; flex-direction: column; }
+
+.timer-panel { flex: 0.7; min-width: 250px; padding: 15px; position: relative; }
+.diary-panel { flex: 1.4; min-width: 380px; } /* DIÁRIO MAIS LARGO */
+.anime-panel { flex: 0.8; min-width: 280px; display: flex; flex-direction: column; }
+
+/* TIMER UI */
+.timer-bg-art { position: absolute; bottom: 0; right: 0; height: 160px; opacity: 0.8; pointer-events: none; z-index: 0; }
+.tabs-scroll-container { display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; margin-bottom: 20px; z-index: 2; cursor: grab; }
+.pill-tab { background: rgba(128, 128, 128, 0.1); border: 1px solid transparent; padding: 6px 12px; border-radius: 8px 8px 0 0; cursor: pointer; flex-shrink: 0; font-size: 0.85rem; color: var(--text-gray); font-weight: bold; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+.pill-tab:hover { background: rgba(128, 128, 128, 0.2); }
+.pill-tab.active { background: var(--active-brown); color: #fff; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); }
+.pill-tab-add { background: transparent; border: 1px dashed var(--border-soft); border-radius: 8px; color: var(--text-gray); cursor: pointer; padding: 0 10px; height: 30px; }
+.timer-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
+.timer-circle-outer { width: 220px; height: 220px; border: 2px solid var(--text-brown); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(128,128,128,0.05); margin-bottom: 25px; }
+.timer-circle-inner { width: 200px; height: 200px; background: var(--panel-bg); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); }
+#timer { font-size: 3.2rem; font-family: var(--font-timer); margin: 0; color: var(--text-brown); cursor: pointer; outline: none; }
+.timer-label { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+.timer-controls-row { display: flex; gap: 8px; align-items: center; }
+.ctrl-btn-small, .ctrl-btn-pill { border: 1px solid var(--border-soft); background: transparent; cursor: pointer; font-weight: bold; color: var(--text-brown); border-radius: 10px; transition: 0.2s; }
+.ctrl-btn-small { width: 35px; height: 35px; } .ctrl-btn-pill { padding: 8px 15px; }
+.ctrl-btn-small:hover, .ctrl-btn-pill:hover { border-color: var(--primary-green); color: var(--primary-green); }
+.ctrl-btn-main { background: var(--primary-green); color: #fff; border: none; padding: 10px 35px; border-radius: 10px; font-size: 1rem; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.15); transition: transform 0.1s; }
+.ctrl-btn-main:active { transform: translateY(2px); box-shadow: none; }
+
+/* DIARY UI */
+.diary-header { display: flex; justify-content: space-between; padding: 10px 15px 5px; }
+.diary-title { font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.diary-date-display { font-size: 0.8rem; color: var(--text-gray); }
+.month-pill-wrapper { display: flex; justify-content: center; margin-bottom: 5px; position: relative; }
+.month-pill { background: transparent; border: 1px solid var(--border-soft); padding: 4px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; color: var(--text-brown); font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+.month-pill:hover { border-color: var(--primary-green); color: var(--primary-green); }
+.calendar-popup { position: absolute; top: 45px; left: 50%; transform: translateX(-50%); background: var(--panel-bg); border: 2px solid var(--active-brown); border-radius: var(--radius-panel); padding: 15px; z-index: 150; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+.cal-grid-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.cal-month-btn { padding: 12px 5px; background: transparent; border: 1px dashed var(--border-soft); border-radius: var(--radius-panel); cursor: pointer; color: var(--text-brown); font-size: 0.85rem; font-weight: bold; font-family: var(--font-ui); transition: 0.2s; text-align: center; }
+.cal-month-btn:hover { background: var(--bg-green-soft); border-color: var(--primary-green); border-style: solid; transform: translateY(-2px); }
+.cal-month-btn.active { background: var(--active-brown); color: #fff; border-style: solid; border-color: var(--active-brown); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.cal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed var(--border-soft); }
+.cal-header button { background: transparent; border: none; cursor: pointer; color: var(--text-brown); }
+
+.week-grid { display: flex; justify-content: space-between; border-top: 1px dashed var(--border-soft); border-bottom: 1px solid var(--active-brown); padding: 5px 15px; background: rgba(0,0,0,0.02); }
+.week-day-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 0.8rem; padding: 4px 10px; border-radius: 5px; }
+.week-day-btn.active { background: var(--active-brown); color: #fff; font-weight: bold; }
+.logs-area { height: 120px; flex: none; overflow-y: auto; background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-soft); padding: 0; margin: 0; width: 100%; }
+.log-list-clean { list-style: none; padding: 0; margin: 0; width: 100%; }
+.log-item-clean { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; width: 100%; box-sizing: border-box; border-bottom: 1px dashed var(--border-soft); font-size: 0.8rem; }
+.log-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.log-icon { color: var(--primary-green); width: 20px; text-align: center; flex-shrink: 0; }
+.log-info { display: flex; flex-direction: column; }
+.log-time-stamp { font-size: 0.7rem; color: var(--text-gray); }
+.log-name { font-weight: bold; color: var(--text-brown); }
+.log-plus { font-weight: bold; color: var(--text-brown); white-space: nowrap; }
+.diary-footer { flex: 1; padding: 15px; display: flex; flex-direction: column; overflow-y: auto; }
+.daily-chips { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; min-height: 20px; }
+.chip { background: transparent; border: 1px solid var(--border-soft); padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; color: var(--text-brown); }
+.stats-bars-container { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; flex: none; }
+.stat-bar-row { background: var(--bg-green-soft); border-radius: var(--radius-panel); padding: 5px 15px; display: flex; justify-content: space-between; color: var(--text-brown); font-size: 0.8rem; border: 1px solid transparent; }
+.stat-bar-row.green-tint { border-color: var(--primary-green); background: rgba(128, 128, 128, 0.05); }
+.sb-label strong { color: var(--primary-green); }
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.stat-card-simple { background: rgba(128,128,128,0.05); border: 1px solid var(--border-soft); border-radius: var(--radius-panel); padding: 8px; text-align: center; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
+.stat-card-simple:hover { transform: translateY(-2px); border-color: var(--primary-green); background: var(--bg-green-soft); }
+.sc-icon { font-size: 1rem; margin-bottom: 2px; }
+.sc-label { font-size: 0.65rem; color: var(--text-gray); text-transform: uppercase; font-weight: bold; }
+.sc-val { font-size: 1rem; font-weight: bold; color: var(--text-brown); }
+.footer-actions { margin-top: auto; display: flex; justify-content: flex-end; padding-top: 10px; }
+.pill-action { background: transparent; border: 1px solid var(--border-soft); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.75rem; color: var(--text-brown); margin-left: 5px; display: flex; align-items: center; gap: 5px; }
+.pill-action:hover { background: var(--bg-green-soft); border-color: var(--text-brown); }
+.pill-action.danger:hover { color: #fff; background: var(--accent-red); border-color: var(--accent-red); }
+
+/* ANIME TRACKER UI */
+.anime-list-area { flex: 1; overflow-y: auto; padding: 0; border-top: 1px solid var(--border-soft); }
+.anime-list-ul { list-style: none; padding: 0; margin: 0; }
+.anime-item { border-bottom: 1px solid var(--border-soft); }
+.anime-header { padding: 10px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; background: rgba(0,0,0,0.01); }
+.anime-header:hover { background: var(--bg-green-soft); }
+.anime-title-row { font-weight: bold; font-size: 0.9rem; display: flex; gap: 10px; align-items: center; }
+.anime-group-count { font-size: 0.75rem; color: var(--text-gray); font-weight: normal; }
+.anime-subgroup { display: none; background: rgba(0,0,0,0.02); border-top: 1px solid var(--border-soft); }
+.anime-item.expanded .anime-subgroup { display: block; }
+.anime-child-item { display: flex; gap: 10px; padding: 10px 15px; border-bottom: 1px dashed var(--border-soft); }
+.anime-child-thumb { width: 50px; height: 70px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border-soft); }
+.anime-child-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.anime-child-review { font-size: 0.75rem; font-style: italic; color: var(--text-gray); margin-top: 4px; }
+.anime-form-grid { display: flex; gap: 15px; margin-bottom: 15px; }
+.anime-cover-upload { width: 100px; height: 140px; background: var(--bg-green-soft); border: 2px dashed var(--border-soft); border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; color: var(--text-gray); transition: 0.2s; }
+.anime-cover-upload:hover { border-color: var(--primary-green); color: var(--primary-green); }
+.anime-cover-upload img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; }
+.anime-inputs { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.star-rating { font-size: 1.2rem; color: var(--border-soft); cursor: pointer; }
+.star-rating i.active { color: #ffca28; }
+
+/* TIMER MANAGER UI */
+.timers-list-container { background: var(--bg-green-soft); border: 1px solid var(--border-soft); border-radius: 6px; max-height: 150px; overflow-y: auto; padding: 5px; }
+.timer-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed var(--border-soft); font-size: 0.85rem; color: var(--text-brown); }
+.timer-manage-item:last-child { border-bottom: none; }
+.timer-manage-actions { display: flex; gap: 5px; }
+
+/* MODAIS GERAIS */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; }
+.paper-window { background: var(--panel-bg); border: 2px solid var(--border-soft); border-radius: var(--radius-panel); box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 400px; max-width: 90%; overflow: hidden; position: relative; animation: fadeScale 0.2s ease-out; }
+@keyframes fadeScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-header { background: var(--bg-green-soft); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-soft); }
+.modal-header h3 { margin: 0; font-size: 1rem; color: var(--text-brown); text-transform: uppercase; letter-spacing: 1px; }
+.close-modal-btn { background: transparent; border: none; cursor: pointer; color: var(--text-gray); font-size: 1.1rem; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 15px; text-align: center; border-top: 1px solid var(--border-soft); background: rgba(0,0,0,0.02); }
+.input-wrapper { border: 1px solid var(--border-soft); background: var(--bg-green-soft); border-radius: 6px; padding: 8px; }
+.input-wrapper input { width: 100%; border: none; outline: none; background: transparent; color: var(--text-brown); font-family: var(--font-ui); }
+.setting-block { margin-bottom: 20px; }
+.setting-title { display: block; font-size: 0.85rem; font-weight: bold; color: var(--text-brown); margin-bottom: 8px; border-left: 3px solid var(--primary-green); padding-left: 8px; }
+.mode-selector-row { display: flex; gap: 10px; }
+.mode-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mode-btn.active { background: var(--primary-green); color: #fff; border-color: var(--primary-green); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-brown); font-weight: bold; }
+.switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: var(--primary-green); }
+input:checked + .slider:before { transform: translateX(20px); }
+.slider.round { border-radius: 20px; }
+.slider.round:before { border-radius: 50%; }
+.theme-selector { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.theme-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.theme-btn.theme-default { background-color: #6a9c58; }
+.theme-btn.theme-darkgreen { background-color: #2e7d32; }
+.theme-btn.theme-sakura { background-color: #ff9aa2; }
+.theme-btn.theme-river { background-color: #26c6da; }
+.theme-btn.theme-autumn { background-color: #ef6c00; }
+.btn-rural.confirm { background: var(--primary-green); color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; font-size: 0.95rem; padding: 10px 40px; }
+.btn-rural.confirm:hover { filter: brightness(1.1); transform: translateY(-2px); }
+.confirm-message { font-size: 0.95rem; color: var(--text-brown); text-align: center; line-height: 1.5; margin: 10px 0; font-weight: bold; }
+.styled-range { -webkit-appearance: none; width: 100%; background: transparent; }
+.styled-range::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: var(--primary-green); cursor: pointer; margin-top: -6px; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.styled-range::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border-soft); border-radius: 2px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--active-brown); border-radius: 3px; transition: background 0.3s; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-green); }
+
+/* ... [TODO O SEU CSS ANTIGO] ... */
+
+/* CAMPO EXTRA DO ANIME (TÍTULO EPISÓDIO) */
+.anime-inputs input[type="text"]#anime-ep-title { margin-top: 10px; }
+
+/* PALETAS DE CORES EXTRAS */
+body.theme-ergo { --panel-rgb: 20, 20, 30; --primary-green: #5d6d7e; --active-brown: #34495e; --bg-green-soft: #17202a; --text-brown: #d5d8dc; --border-soft: #2c3e50; }
+body.theme-lain { --panel-rgb: 40, 10, 10; --primary-green: #b71c1c; --active-brown: #8e0000; --bg-green-soft: #1a0505; --text-brown: #ffcdd2; --border-soft: #5e1515; }
+body.theme-another { --panel-rgb: 15, 15, 15; --primary-green: #880e4f; --active-brown: #4a148c; --bg-green-soft: #050505; --text-brown: #fce4ec; --border-soft: #4a0000; }
+body.theme-opm { --panel-rgb: 255, 255, 240; --primary-green: #ffeb3b; --active-brown: #d32f2f; --bg-green-soft: #fffde7; --text-brown: #b71c1c; --border-soft: #fbc02d; }
+body.theme-nhk { --panel-rgb: 245, 245, 245; --primary-green: #ff9800; --active-brown: #546e7a; --bg-green-soft: #eceff1; --text-brown: #37474f; --border-soft: #cfd8dc; }
+body.theme-frieren { --panel-rgb: 250, 255, 250; --primary-green: #aed581; --active-brown: #dce775; --bg-green-soft: #f1f8e9; --text-brown: #5d4037; --border-soft: #c5e1a5; }
+
+/* CORREÇÃO CALENDÁRIO */
+.month-pill-wrapper { position: relative; z-index: 102; }
+.calendar-popup { position: absolute; top: 110%; left: 50%; transform: translateX(-50%); width: 300px; z-index: 150; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+/* MODAL DE CONFIRMAÇÃO (Janela Bonita) */
+#confirm-modal {
+    z-index: 1000; /* Garante que fique acima de tudo */
+}
+
+/* Garante que o botão de apagar não seja afetado pelo estilo do card pai */
+.anime-child-item button {
+    position: relative;
+    z-index: 10; /* Garante que o clique pegue no botão, não no fundo */
+}
+
+/* ESTATÍSTICAS DO ANIME TRACKER */
+.anime-footer {
+    padding: 10px 15px;
+    border-top: 1px solid var(--border-soft);
+    background: rgba(0,0,0,0.02); /* Fundo sutil */
+    display: flex;
+    justify-content: space-around; /* Espalha os itens */
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-brown);
+    margin-top: auto; /* Empurra para o fundo se sobrar espaço */
+}
+
+.anime-stat {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.anime-stat strong {
+    color: var(--primary-green);
+    font-size: 1rem;
+}
+
+/* ============================================================
+   NOVAS PALETAS DE ANIMES (ADAPTÁVEIS CLARO/ESCURO)
+   ============================================================ */
+
+/* --- 1. ERGO PROXY (Cyberpunk Gótico) --- */
+/* Claro: Cinza azulado pálido e cores desaturadas */
+body.theme-ergo {
+    --primary-green: #546e7a; /* Azul acinzentado */
+    --bg-green-soft: #eceff1;
+    --active-brown: #37474f;
+    --border-soft: #b0bec5;
+}
+/* Escuro: Preto profundo, ciano e cinza escuro */
+body.dark-mode.theme-ergo {
+    --primary-green: #26c6da; /* Ciano Neon */
+    --bg-green-soft: #12181b;
+    --active-brown: #0097a7;
+    --border-soft: #37474f;
+    --panel-rgb: 20, 25, 30; /* Fundo especial azulado escuro */
+}
+.theme-btn.theme-ergo { background: #37474f; border-color: #26c6da; }
+
+
+/* --- 2. SERIAL EXPERIMENTS LAIN (The Wired) --- */
+/* Claro: Ruído, vermelho ferrugem e bege */
+body.theme-lain {
+    --primary-green: #b71c1c; /* Vermelho Sangue */
+    --bg-green-soft: #fbe9e7; /* Bege avermelhado */
+    --active-brown: #8e0000;
+    --text-brown: #4a0d0d;
+    --border-soft: #ffcdd2;
+}
+/* Escuro: The Wired - Fundo preto avermelhado, vermelho digital */
+body.dark-mode.theme-lain {
+    --primary-green: #ff5252; /* Vermelho Digital */
+    --bg-green-soft: #1a0505;
+    --active-brown: #d50000;
+    --border-soft: #5e1515;
+    --panel-rgb: 25, 5, 5;
+}
+.theme-btn.theme-lain { background: #4a0d0d; border-color: #ff5252; }
+
+
+/* --- 3. FRIEREN (Beyond Journey's End) --- */
+/* Claro: Branco, Dourado e Verde Suave (Élfico) */
+body.theme-frieren {
+    --primary-green: #9ccc65; /* Verde Suave */
+    --bg-green-soft: #f1f8e9;
+    --active-brown: #c0ca33; /* Dourado */
+    --border-soft: #dcedc8;
+}
+/* Escuro: Floresta Mágica Noturna */
+body.dark-mode.theme-frieren {
+    --primary-green: #dce775; /* Luz das estrelas */
+    --bg-green-soft: #1b2615;
+    --active-brown: #827717;
+    --border-soft: #33691e;
+    --panel-rgb: 20, 30, 25;
+}
+.theme-btn.theme-frieren { background: #f1f8e9; border-color: #9ccc65; }
+
+
+/* --- 4. KONOSUBA (Isekai Vibrante) --- */
+/* Claro: Azul (Aqua) e Detalhes Coloridos */
+body.theme-konosuba {
+    --primary-green: #29b6f6; /* Azul Aqua */
+    --bg-green-soft: #e1f5fe;
+    --active-brown: #0288d1;
+    --border-soft: #b3e5fc;
+    --accent-red: #ff4081; /* Rosa Megumin */
+}
+/* Escuro: Magia Explosiva (Roxo e Rosa) */
+body.dark-mode.theme-konosuba {
+    --primary-green: #ab47bc; /* Roxo Mágico */
+    --bg-green-soft: #1a0e21;
+    --active-brown: #7b1fa2;
+    --border-soft: #4a148c;
+    --panel-rgb: 30, 20, 40;
+}
+.theme-btn.theme-konosuba { background: #29b6f6; border-color: #ab47bc; }
+
+
+/* --- 5. ONE PUNCH MAN (Hero) --- */
+/* Claro: Amarelo (Traje) e Vermelho (Luvas) */
+body.theme-opm {
+    --primary-green: #fbc02d; /* Amarelo Gema */
+    --bg-green-soft: #fffde7;
+    --active-brown: #d32f2f; /* Vermelho */
+    --text-brown: #b71c1c;
+    --border-soft: #fff9c4;
+}
+/* Escuro: Serious Mode (Preto e Vermelho/Amarelo Neon) */
+body.dark-mode.theme-opm {
+    --primary-green: #ffea00; /* Amarelo Neon */
+    --bg-green-soft: #1a1500;
+    --active-brown: #c62828;
+    --border-soft: #f57f17;
+    --panel-rgb: 30, 25, 10;
+}
+.theme-btn.theme-opm { background: #fbc02d; border-color: #d32f2f; }
+
+
+/* --- 6. ANOTHER (Horror/Escolar) --- */
+/* Claro: Uniforme Escolar (Azul escuro e Laranja enferrujado) */
+body.theme-another {
+    --primary-green: #d84315; /* Laranja Ferrugem */
+    --bg-green-soft: #eceff1;
+    --active-brown: #263238; /* Azul Escuro */
+    --text-brown: #37474f;
+    --border-soft: #cfd8dc;
+}
+/* Escuro: Boneca (Preto, Roxo e Sangue) */
+body.dark-mode.theme-another {
+    --primary-green: #880e4f; /* Roxo Sangue */
+    --bg-green-soft: #0a0508;
+    --active-brown: #4a148c;
+    --border-soft: #311b92;
+    --panel-rgb: 15, 10, 15;
+}
+.theme-btn.theme-another { background: #263238; border-color: #d84315; }
+
+/* ============================================================
+   PALETAS DE FILMES (CINEMATOGRAFIA)
+   ============================================================ */
+
+/* --- 1. WOMB (2010) - Isolamento e Frio --- */
+/* Estética: Praias nubladas, tons pastéis frios, azul pálido e cinza melancólico */
+body.theme-womb {
+    --primary-green: #78909c; /* Azul Acinzentado */
+    --bg-green-soft: #eceff1; /* Névoa */
+    --active-brown: #546e7a;
+    --text-brown: #37474f;
+    --border-soft: #cfd8dc;
+}
+body.dark-mode.theme-womb {
+    --primary-green: #b0bec5; /* Cinza Gelo */
+    --bg-green-soft: #102027; /* Oceano Profundo */
+    --active-brown: #37474f;
+    --border-soft: #263238;
+    --panel-rgb: 20, 35, 40;
+}
+.theme-btn.theme-womb { background: #eceff1; border-color: #78909c; }
+
+
+/* --- 2. DARK CITY (1998) - Neo-Noir & Shell Beach --- */
+/* Estética: Sombras profundas contrastando com o brilho ambarino de "Shell Beach" */
+body.theme-darkcity {
+    --primary-green: #ff6f00; /* Âmbar (Shell Beach) */
+    --bg-green-soft: #263238; /* Concreto Urbano */
+    --active-brown: #e65100;
+    --text-brown: #eceff1; /* Texto claro no modo light para contraste no cinza */
+    --text-gray: #b0bec5;
+    --border-soft: #37474f;
+    --panel-rgb: 40, 45, 50; /* Cinza escuro mesmo no light */
+}
+body.dark-mode.theme-darkcity {
+    --primary-green: #ffca28; /* Luz da Cidade */
+    --bg-green-soft: #000000; /* Escuridão Total */
+    --active-brown: #ff8f00;
+    --border-soft: #212121;
+    --panel-rgb: 5, 5, 10;
+}
+.theme-btn.theme-darkcity { background: #263238; border-color: #ff6f00; }
+
+
+/* --- 3. THE MATRIX (1999) - O Código --- */
+/* Estética: O clássico "Digital Rain" e o "Construct" branco */
+body.theme-matrix {
+    --primary-green: #00c853; /* Verde Matrix */
+    --bg-green-soft: #e8f5e9; /* Construct (Branco Esverdeado) */
+    --active-brown: #2e7d32;
+    --text-brown: #1b5e20;
+    --border-soft: #a5d6a7;
+}
+body.dark-mode.theme-matrix {
+    --primary-green: #00e676; /* Verde Terminal Neon */
+    --bg-green-soft: #000000; /* O Vazio */
+    --active-brown: #00a152;
+    --border-soft: #003300;
+    --panel-rgb: 0, 10, 0; /* Preto Esverdeado */
+    --text-brown: #e8f5e9;
+}
+.theme-btn.theme-matrix { background: #000; border-color: #00e676; }
+
+
+/* --- 4. PIERCING (2018) - Thriller Giallo --- */
+/* Estética: Retrô chique, vermelho sangue vibrante, amarelo mostarda e preto */
+body.theme-piercing {
+    --primary-green: #d32f2f; /* Vermelho Sangue */
+    --bg-green-soft: #fff9c4; /* Amarelo Creme Retrô */
+    --active-brown: #fbc02d; /* Mostarda */
+    --text-brown: #3e2723;
+    --border-soft: #f9a825;
+}
+body.dark-mode.theme-piercing {
+    --primary-green: #ff1744; /* Vermelho Neon */
+    --bg-green-soft: #1a0000; /* Quarto Escuro */
+    --active-brown: #b71c1c;
+    --border-soft: #4a0000;
+    --panel-rgb: 25, 5, 5;
+    --text-brown: #ffebee;
+}
+.theme-btn.theme-piercing { background: #fff9c4; border-color: #d32f2f; }
+/* ============================================================
+   TEMAS TERROR / ANIME / RADIOHEAD
+   ============================================================ */
+
+/* --- 1. STALKER (1979) - A Zona --- */
+/* Estética: Sépia, ferrugem, verde musgo e industrial soviético */
+body.theme-stalker {
+    --primary-green: #827717; /* Verde Musgo */
+    --bg-green-soft: #efebe9; /* Papel Envelhecido */
+    --active-brown: #5d4037; /* Marrom Terra */
+    --text-brown: #3e2723;
+    --border-soft: #a1887f;
+}
+body.dark-mode.theme-stalker {
+    --primary-green: #c0ca33; /* Musgo Radioativo */
+    --bg-green-soft: #1b1b19; /* Bunker Escuro */
+    --active-brown: #556b2f;
+    --border-soft: #33332d;
+    --panel-rgb: 25, 25, 20;
+}
+.theme-btn.theme-stalker { background: #5d4037; border-color: #c0ca33; }
+
+
+/* --- 2. EVANGELION (Unit-01) --- */
+/* Estética: Roxo vibrante, verde neon e laranja (LCL) */
+body.theme-eva {
+    --primary-green: #7b1fa2; /* Roxo Eva */
+    --bg-green-soft: #f3e5f5;
+    --active-brown: #4caf50; /* Verde Detalhe */
+    --text-brown: #4a148c;
+    --border-soft: #ce93d8;
+    --accent-red: #ff5722; /* Laranja LCL */
+}
+body.dark-mode.theme-eva {
+    --primary-green: #00e676; /* Verde Neon (Olhos) */
+    --bg-green-soft: #120a17; /* Fundo Roxo Quase Preto */
+    --active-brown: #6a1b9a; /* Roxo Profundo */
+    --border-soft: #4a148c;
+    --panel-rgb: 20, 10, 30;
+    --text-brown: #e1bee7;
+}
+.theme-btn.theme-eva { background: #7b1fa2; border-color: #00e676; }
+
+
+/* --- 3. BERSERK (O Eclipse) --- */
+/* Estética: Preto absoluto, vermelho sangue profundo e cinza metal */
+body.theme-berserk {
+    --primary-green: #d50000; /* Marca do Sacrifício */
+    --bg-green-soft: #eceff1;
+    --active-brown: #212121; /* Armadura Negra */
+    --text-brown: #000000;
+    --border-soft: #b0bec5;
+}
+body.dark-mode.theme-berserk {
+    --primary-green: #ff1744; /* Sangue Fresco */
+    --bg-green-soft: #000000; /* O Abismo */
+    --active-brown: #b71c1c;
+    --border-soft: #330000;
+    --panel-rgb: 5, 0, 0; /* Quase Vazio */
+}
+.theme-btn.theme-berserk { background: #000; border-color: #d50000; }
+
+
+/* --- 4. IN RAINBOWS (Radiohead) --- */
+/* Estética: Explosão de cores quentes (Laranja, Vermelho, Amarelo) no espaço */
+body.theme-rainbows {
+    --primary-green: #ff6d00; /* Laranja Capa */
+    --bg-green-soft: #fff3e0;
+    --active-brown: #d50000; /* Vermelho Texto */
+    --text-brown: #bf360c;
+    --border-soft: #ffcc80;
+}
+body.dark-mode.theme-rainbows {
+    --primary-green: #ffab00; /* Dourado */
+    --bg-green-soft: #1a0f00; /* Espaço Profundo */
+    --active-brown: #ff3d00; /* Vermelho Neon */
+    --border-soft: #3e2723;
+    --panel-rgb: 25, 10, 5;
+    --text-brown: #ffecb3;
+}
+.theme-btn.theme-rainbows { background: #1a0f00; border-color: #ff6d00; }
+
+
+/* --- 5. OK COMPUTER (Radiohead) --- */
+/* Estética: Glitch, Branco Frio, Azul Pálido e Alienação Digital */
+body.theme-okc {
+    --primary-green: #0288d1; /* Azul Frio */
+    --bg-green-soft: #ffffff; /* Branco Puro */
+    --active-brown: #455a64; /* Cinza Corporativo */
+    --text-brown: #37474f;
+    --border-soft: #cfd8dc;
+}
+body.dark-mode.theme-okc {
+    --primary-green: #80d8ff; /* Azul Glitch */
+    --bg-green-soft: #eceff1; /* Fundo Claro (Invertido propositalmente para causar estranheza/glitch) */
+    --active-brown: #263238;
+    --text-brown: #102027; /* Texto Escuro no modo "Dark" (Estética Fitter Happier) */
+    --border-soft: #90a4ae;
+    --panel-rgb: 240, 245, 250; /* Painel Claro no Dark Mode */
+}
+/* Correção especial para o modo "invertido" do OK Computer */
+body.dark-mode.theme-okc input, 
+body.dark-mode.theme-okc textarea { color: #000 !important; }
+body.dark-mode.theme-okc .btn-rural { border-color: #90a4ae; color: #37474f; }
+body.dark-mode.theme-okc .btn-rural:hover { background: #fff; color: #0288d1; }
+
+.theme-btn.theme-okc { background: #fff; border-color: #0288d1; }
+
+/* ============================================================
+   ESTÉTICA SERIAL EXPERIMENTS LAIN (COMPUTER FOCUS)
+   ============================================================ */
+
+/* --- 1. THE WIRED (Deus na Máquina) --- */
+/* Foco: O abismo digital, sombras vermelhas e pretos absolutos. */
+/* Claro: O mundo real, monótono, sombras duras e texto vermelho sangue. */
+body.theme-wired {
+    --primary-green: #b71c1c; /* Vermelho Sangue */
+    --bg-green-soft: #d7ccc8; /* Cinza Concreto Sujo */
+    --active-brown: #3e2723; /* Sombra Dura */
+    --text-brown: #212121;
+    --border-soft: #8d6e63;
+}
+/* Escuro: A Wired pura. Fundo preto infinito, texto vermelho digital e ciano elétrico. */
+body.dark-mode.theme-wired {
+    --primary-green: #ff1744; /* Vermelho Laser */
+    --bg-green-soft: #000000; /* Vazio Absoluto */
+    --active-brown: #d50000;
+    --border-soft: #330000;
+    --text-brown: #ffcdd2; /* Texto pálido */
+    --panel-rgb: 5, 0, 0;
+    --accent-red: #00e5ff; /* Ciano (referência às sombras digitais) */
+}
+.theme-btn.theme-wired { background: #000; border-color: #ff1744; }
+
+
+/* --- 2. NAVI 98 (Hardware Retrô) --- */
+/* Foco: A estética física dos computadores dos anos 90. Plástico bege, telas CRT. */
+/* Claro: "Beige Box" - A cor dos gabinetes antigos. */
+body.theme-navi {
+    --primary-green: #00695c; /* Verde LED de Power */
+    --bg-green-soft: #f5f5dc; /* Bege Computador Antigo */
+    --active-brown: #546e7a; /* Cinza Plástico */
+    --text-brown: #37474f;
+    --border-soft: #cfd8dc;
+}
+/* Escuro: Terminal CRT - Fósforo Verde e Fundo Scanline. */
+body.dark-mode.theme-navi {
+    --primary-green: #00e676; /* Verde Fósforo CRT */
+    --bg-green-soft: #05180a; /* Fundo do Monitor Desligado */
+    --active-brown: #00c853;
+    --border-soft: #1b5e20;
+    --panel-rgb: 0, 20, 5;
+    --text-brown: #b9f6ca;
+}
+/* Estilo extra para simular brilho de terminal no modo escuro */
+body.dark-mode.theme-navi .input-wrapper,
+body.dark-mode.theme-navi .rural-panel {
+    border: 1px solid #00e676;
+    box-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
+}
+.theme-btn.theme-navi { background: #f5f5dc; border-color: #00695c; }
+
+
+/* --- 3. STATIC NOISE (Ruído Psicológico) --- */
+/* Foco: Interferência, chiado de TV, "Fading", cores frias e desconexas. */
+/* Claro: Estática branca/cinza e azul pálido. */
+body.theme-noise {
+    --primary-green: #7e57c2; /* Roxo Interferência */
+    --bg-green-soft: #e3f2fd; /* Azul Estática */
+    --active-brown: #9575cd;
+    --text-brown: #4527a0;
+    --border-soft: #b39ddb;
+}
+/* Escuro: O som do zumbido elétrico. Azul escuro, roxo e cinza chumbo. */
+body.dark-mode.theme-noise {
+    --primary-green: #b388ff; /* Roxo Elétrico */
+    --bg-green-soft: #121212; /* Cinza Ruído */
+    --active-brown: #651fff;
+    --border-soft: #6200ea;
+    --panel-rgb: 20, 20, 35;
+    --text-brown: #ede7f6;
+}
+.theme-btn.theme-noise { background: #e3f2fd; border-color: #7e57c2; }
+
+/* ============================================================
+   MAIS TEMAS (SCI-FI, HORROR, RETRO)
+   ============================================================ */
+
+/* --- 1. BLADE RUNNER 2049 (Interlinked) --- */
+/* Estética: O contraste clássico de Laranja (Deserto) e Azul Teal (Hologramas). */
+/* Claro: Deserto de Las Vegas - Laranja poeirento e Areia. */
+body.theme-blade {
+    --primary-green: #ff6f00; /* Laranja Holandês */
+    --bg-green-soft: #fff3e0; /* Areia */
+    --active-brown: #ef6c00;
+    --text-brown: #3e2723;
+    --border-soft: #ffcc80;
+}
+/* Escuro: Los Angeles 2049 - Preto profundo, Chuva e Hologramas Teal/Rosa. */
+body.dark-mode.theme-blade {
+    --primary-green: #00bcd4; /* Azul Holograma */
+    --bg-green-soft: #0a0e14; /* Preto Tech */
+    --active-brown: #ff4081; /* Rosa Neon Joi */
+    --border-soft: #263238;
+    --panel-rgb: 10, 15, 20;
+    --accent-red: #ff5252;
+}
+.theme-btn.theme-blade { background: #ff6f00; border-color: #00bcd4; }
+
+
+/* --- 2. SILENT HILL (Otherworld) --- */
+/* Estética: Neblina cinza, ferrugem, metal corroído e sangue seco. */
+/* Claro: A Cidade na Neblina - Cinza pálido e branco sujo. */
+body.theme-silent {
+    --primary-green: #757575; /* Cinza Neblina */
+    --bg-green-soft: #eceff1; /* Branco Sujo */
+    --active-brown: #4e342e; /* Madeira Velha */
+    --text-brown: #37474f;
+    --border-soft: #b0bec5;
+}
+/* Escuro: O Outro Mundo - Ferrugem, Grades e Escuridão. */
+body.dark-mode.theme-silent {
+    --primary-green: #d84315; /* Ferrugem Laranja */
+    --bg-green-soft: #1a0500; /* Escuridão Suja */
+    --active-brown: #8d6e63; /* Metal Corroído */
+    --border-soft: #3e2723; /* Sangue Seco */
+    --panel-rgb: 20, 10, 5;
+    --text-brown: #ffccbc;
+}
+.theme-btn.theme-silent { background: #b0bec5; border-color: #d84315; }
+
+
+/* --- 3. GHOST IN THE SHELL (Section 9) --- */
+/* Estética: A cidade futurista de Hong Kong/Tóquio. Verde digital, concreto e luzes da cidade. */
+/* Claro: Dia Urbano - Cinza concreto e Azul corporativo. */
+body.theme-ghost {
+    --primary-green: #009688; /* Verde/Azul Tech */
+    --bg-green-soft: #cfd8dc; /* Concreto */
+    --active-brown: #455a64;
+    --text-brown: #263238;
+    --border-soft: #90a4ae;
+}
+/* Escuro: Mergulho na Rede - Verde digital brilhante e azul noturno. */
+body.dark-mode.theme-ghost {
+    --primary-green: #64ffda; /* Verde Hacker (Diferente do Matrix) */
+    --bg-green-soft: #081015; /* Noite Urbana */
+    --active-brown: #006064;
+    --border-soft: #004d40;
+    --panel-rgb: 5, 15, 20;
+}
+.theme-btn.theme-ghost { background: #009688; border-color: #64ffda; }
+
+
+/* --- 4. WINDOWS 95 (Aesthetic / Vaporwave) --- */
+/* Estética: Nostalgia pura. Teal clássico, cinza padrão e rosa neon. */
+/* Claro: Desktop Clássico - O Fundo Teal (#008080) e janelas cinzas. */
+body.theme-win95 {
+    --primary-green: #008080; /* Teal Windows 95 */
+    --bg-green-soft: #c0c0c0; /* Cinza Windows Padrão */
+    --active-brown: #000080; /* Azul Barra de Título */
+    --text-brown: #000000;
+    --border-soft: #dfdfdf; /* Borda 3D */
+}
+/* Escuro: Vaporwave Dream - Roxo, Rosa e Ciano. */
+body.dark-mode.theme-win95 {
+    --primary-green: #ff79c6; /* Rosa Neon */
+    --bg-green-soft: #181026; /* Roxo Profundo */
+    --active-brown: #bd93f9; /* Lavanda */
+    --border-soft: #6272a4;
+    --panel-rgb: 30, 20, 45;
+    --accent-red: #8be9fd; /* Ciano */
+}
+/* Ajuste especial para simular janelas antigas no modo claro */
+body.theme-win95:not(.dark-mode) .rural-panel,
+body.theme-win95:not(.dark-mode) .paper-window {
+    border: 2px outset #fff;
+    box-shadow: 2px 2px 0 #000;
+    background: #c0c0c0;
+}
+.theme-btn.theme-win95 { background: #008080; border-color: #ff79c6; }
+
+/* Modal Overlay (Fundo escuro) */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Garante que fique em cima de tudo */
+    backdrop-filter: blur(2px); /* Desfoque leve no fundo */
+}
+
+/* Modal Box (A janela em si) */
+.modal-box {
+    min-width: 300px;
+    max-width: 400px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Botão de Perigo (Vermelho/Tema) */
+.btn-rural.danger {
+    border-color: #d32f2f;
+    color: #d32f2f;
+}
+.btn-rural.danger:hover {
+    background: #d32f2f;
+    color: #fff;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cabeçalho do Anime (Flexbox para alinhar nome e botão) */
+.anime-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    background-color: rgba(0,0,0,0.02);
+}
+
+/* Lado esquerdo (Ícone e Nome) */
+.anime-info-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* O Botão Quick Add (+) */
+.btn-quick-add {
+    background-color: #4caf50; /* Verde */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px; /* Tamanho fixo */
+    height: 30px; /* Tamanho fixo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 999; /* Garante que fique por cima */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.btn-quick-add:hover {
+    transform: scale(1.1);
+    background-color: #45a049;
+}
+
+/* A Lista de Episódios (Começa Escondida) */
+.anime-subgroup {
+    display: none; /* Padrão fechado */
+    padding-left: 15px;
+    background-color: #fff;
+}
+
+/* Classe utilitária para quando estiver aberto */
+.anime-subgroup.open {
+    display: block !important;
+}
+
+
+/* ==========================================================================
+   NOVOS TEMAS (OVERRIDE TOTAL)
+   ========================================================================== */
+
+/* --- TEMA 1: CYBERPUNK (Futurista / Hacker) --- */
+body.theme-cyberpunk {
+    /* Cores Neon */
+    --primary-green: #00ffea;  /* Cyan Neon */
+    --primary-hover: #00ccbb;
+    --text-brown: #ff00ff;     /* Pink Neon para textos */
+    --text-gray: #a8a8a8;
+    --bg-paper: #0a0a12;       /* Fundo quase preto */
+    --border-soft: #333;
+    
+    /* Fontes Digitais */
+    --font-ui: 'Courier New', monospace;
+    --font-jp: 'Courier New', monospace;
+    
+    /* Visual Tech */
+    --shadow-paper: 0 0 10px rgba(0, 255, 234, 0.2); /* Brilho Neon */
+    --radius-panel: 0px !important; /* Tudo quadrado */
+    --radius-btn: 0px !important;
+    
+    background-color: #050505;
+    background-image: linear-gradient(0deg, transparent 24%, rgba(0, 255, 234, .05) 25%, rgba(0, 255, 234, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 234, .05) 75%, rgba(0, 255, 234, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 234, .05) 25%, rgba(0, 255, 234, .05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 234, .05) 75%, rgba(0, 255, 234, .05) 76%, transparent 77%, transparent);
+    background-size: 50px 50px; /* Grid no fundo */
+}
+
+/* Ajustes específicos do Cyberpunk */
+body.theme-cyberpunk .rural-panel, 
+body.theme-cyberpunk .paper-window {
+    border: 1px solid #00ffea; /* Borda brilhante */
+}
+body.theme-cyberpunk .btn-rural {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* --- TEMA 2: COFFEE (Aconchegante / Leitura) --- */
+body.theme-coffee {
+    /* Paleta Café */
+    --primary-green: #8d6e63;  /* Marrom suave */
+    --primary-hover: #6d4c41;
+    --text-brown: #3e2723;     /* Marrom escuro */
+    --text-gray: #795548;
+    --bg-paper: #fff8e1;       /* Creme amarelado */
+    --border-soft: #d7ccc8;
+    
+    /* Fontes Elegantes */
+    --font-ui: 'Georgia', serif;
+    --font-jp: 'Sawarabi Mincho', serif;
+    
+    /* Visual Suave */
+    --shadow-paper: 5px 5px 0px rgba(62, 39, 35, 0.1);
+    --radius-panel: 20px !important;
+    --radius-btn: 12px !important;
+    
+    background-color: #efebe9;
+    background-image: none;
+}
+
+/* Ajustes específicos do Coffee */
+body.theme-coffee .top-bar {
+    background: #d7ccc8;
+    color: #3e2723;
+    border-bottom: 1px dashed #8d6e63;
+}
+
+/* --- TEMA 3: DRACULA (Gótico / Noturno) --- */
+body.theme-dracula {
+    /* Paleta Vampiro */
+    --primary-green: #ff5555;  /* Vermelho Sangue */
+    --primary-hover: #ff3333;
+    --text-brown: #f8f8f2;     /* Branco Gelo */
+    --text-gray: #6272a4;      /* Azulacinzentado */
+    --bg-paper: #282a36;       /* Fundo Dracula padrão */
+    --border-soft: #44475a;
+    
+    /* Fontes */
+    --font-ui: 'Segoe UI', sans-serif;
+    
+    /* Visual */
+    --shadow-paper: 0 4px 15px rgba(0,0,0,0.5);
+    --radius-panel: 8px !important;
+    
+    background-color: #1e1f29;
+    background-image: none;
+}
+
+/* Ajustes específicos do Dracula */
+body.theme-dracula .btn-rural {
+    background-color: #44475a; /* Botões cinzas */
+    color: #ff5555;
+    border: 1px solid #ff5555;
+}
+body.theme-dracula .btn-rural.confirm,
+body.theme-dracula .btn-rural:hover {
+    background-color: #ff5555;
+    color: white;
+}
+
+/* ==========================================================================
+   TEMAS DE CORES (COFFEE & DARK COFFEE)
+   ========================================================================== */
+
+/* --- TEMA: CAFÉ COM LEITE (Claro) --- */
+body.theme-coffee {
+    --primary-green: #8d6e63;  /* Marrom suave */
+    --primary-hover: #6d4c41;
+    --text-brown: #3e2723;     /* Café escuro */
+    --text-gray: #795548;
+    --bg-paper: #fff8e1;       /* Creme */
+    --border-soft: #d7ccc8;
+    
+    /* Fontes Serifadas para parecer jornal/livro */
+    --font-ui: 'Georgia', serif;
+    --font-jp: 'Sawarabi Mincho', serif;
+    
+    background-color: #efebe9;
+    background-image: none;
+}
+
+/* --- TEMA: CAFÉ EXPRESSO (Escuro) --- */
+body.theme-coffee-dark {
+    --primary-green: #d7ccc8;  /* Creme claro */
+    --primary-hover: #fff8e1;
+    --text-brown: #efebe9;     /* Quase branco */
+    --text-gray: #a1887f;
+    --bg-paper: #3e2723;       /* Marrom Café Forte */
+    --border-soft: #5d4037;
+    
+    /* Fontes Serifadas */
+    --font-ui: 'Georgia', serif;
+    --font-jp: 'Sawarabi Mincho', serif;
+    
+    background-color: #271c19; /* Quase preto */
+    background-image: none;
+}
+/* Ajuste de botões no modo dark coffee para dar contraste */
+body.theme-coffee-dark .btn-rural {
+    background-color: #5d4037;
+    color: #fff;
+    border: 1px solid #8d6e63;
+}
+
+
+/* ==========================================================================
+   MUDANÇA RADICAL DE LAYOUT (CYBERPUNK / FUTURISTA)
+   Aqui a gente quebra o flexbox e usa GRID para mover as coisas de lugar
+   ========================================================================== */
+
+body.theme-cyberpunk {
+    /* Cores Neon */
+    --primary-green: #00ff00; /* Verde Terminal */
+    --primary-hover: #00cc00;
+    --text-brown: #00ff00;
+    --text-gray: #005500;
+    --bg-paper: #000000;
+    --border-soft: #003300;
+    
+    --font-ui: 'Courier New', monospace;
+    --radius-panel: 0px !important; /* Tudo quadrado */
+    --radius-btn: 0px !important;
+    
+    background-color: #0d0d0d;
+    background-image: linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, .03) 25%, rgba(0, 255, 0, .03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .03) 75%, rgba(0, 255, 0, .03) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, .03) 25%, rgba(0, 255, 0, .03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, .03) 75%, rgba(0, 255, 0, .03) 76%, transparent 77%, transparent);
+    background-size: 50px 50px;
+}
+
+/* --- A MÁGICA DO LAYOUT --- */
+body.theme-cyberpunk .panels-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important; /* 3 Colunas */
+    grid-template-rows: auto auto !important;
+    gap: 20px !important;
+    
+    /* DEFININDO AS ÁREAS DO GRID */
+    /* Topo: O Timer ocupa a largura total (3 colunas)
+       Baixo: Diário (2 colunas) | Anime (1 coluna) 
+    */
+    grid-template-areas: 
+        "timer timer timer"
+        "diary diary anime";
+        
+    width: 95%;
+    margin: 0 auto;
+}
+
+/* Designando cada painel para sua nova área */
+body.theme-cyberpunk .timer-panel {
+    grid-area: timer !important;
+    
+    /* Muda o timer para horizontal */
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between;
+    align-items: center;
+    height: 120px; /* Mais fino */
+    border: 2px solid #00ff00;
+    box-shadow: 0 0 15px rgba(0,255,0,0.2);
+}
+
+/* Ajustes internos do Timer quando ele fica horizontal */
+body.theme-cyberpunk .timer-body {
+    flex-direction: row !important; /* Timer e botões lado a lado */
+    width: 100%;
+    justify-content: space-around;
+}
+body.theme-cyberpunk .timer-circle-outer {
+    width: 100px !important; height: 100px !important;
+    border: none !important; /* Remove o círculo visual */
+}
+body.theme-cyberpunk #timer {
+    font-size: 4rem !important; /* Fonte gigante */
+    text-shadow: 0 0 10px #00ff00;
+}
+
+body.theme-cyberpunk .diary-panel {
+    grid-area: diary !important;
+    border: 1px solid #005500;
+    height: 500px;
+}
+
+body.theme-cyberpunk .anime-panel {
+    grid-area: anime !important;
+    border: 1px solid #005500;
+    height: 500px;
+}
+
+/* Removemos o fundo das janelas para parecer interface de terminal */
+body.theme-cyberpunk .rural-panel {
+    background: rgba(0, 20, 0, 0.9) !important;
+}
+
+/* ==========================================================================
+   ANIME & RPG TOTAL CONVERSIONS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. MEDIEVAL (QUEST BOARD) - Restaurado com Pregos e Tamanho Correto
+   -------------------------------------------------------------------------- */
+body.theme-medieval {
+    --bg-paper: #f4e4bc;     /* Pergaminho Amarelado */
+    --text-brown: #3e2723;   /* Tinta Nanquim */
+    --text-gray: #6d4c41;
+    --primary-green: #8b0000; /* Lacre Vermelho */
+    --border-soft: #c1b398;
+    
+    background-color: #2c1e12; /* Madeira Escura */
+    background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 2px, transparent 2px, transparent 4px);
+    font-family: 'Georgia', serif !important;
+}
+
+/* Modo Dark Medieval (Couro) */
+body.theme-medieval.dark-mode {
+    --bg-paper: #3e2b22; 
+    --text-brown: #eaddca;
+    background-color: #1a100c;
+}
+
+/* Layout Centralizado e "Pregado" */
+body.theme-medieval .panels-row {
+    display: flex !important;
+    gap: 30px !important;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 100px) !important;
+    padding: 0 40px;
+}
+
+/* Os "Pergaminhos" */
+body.theme-medieval .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 1px solid #8b5e3c !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+    position: relative;
+    border-radius: 2px !important;
+    /* Tamanho controlado */
+    max-height: 80vh;
+    width: 350px !important; /* Força cards mais estreitos */
+}
+
+/* OS PREGOS (Restaurados) */
+body.theme-medieval .rural-panel::after,
+body.theme-medieval .rural-panel::before {
+    content: ''; position: absolute; top: 10px; width: 12px; height: 12px;
+    background: radial-gradient(circle at 30% 30%, #a1887f, #3e2723);
+    border-radius: 50%; box-shadow: 1px 1px 2px rgba(0,0,0,0.6); z-index: 10;
+}
+body.theme-medieval .rural-panel::before { left: 10px; }
+body.theme-medieval .rural-panel::after { right: 10px; }
+
+/* Barra Superior como Placa de Madeira */
+body.theme-medieval .top-bar {
+    background: #4e342e !important;
+    border-bottom: 4px solid #271c19 !important;
+    color: #eaddca !important;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+body.theme-medieval button {
+    border-radius: 3px !important;
+    border: 1px solid #8b5e3c !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   2. FRIEREN (MAGICAL GRIMOIRE) - Elegante, Dourado e Etéreo
+   -------------------------------------------------------------------------- */
+body.theme-frieren-ui {
+    --bg-paper: rgba(255, 255, 255, 0.95);
+    --text-brown: #4a5d7e;   /* Azul Acinzentado (Cabelo Frieren) */
+    --text-gray: #8fa1b3;
+    --primary-green: #d4af37; /* Dourado Mágico */
+    --primary-hover: #bfa030;
+    --border-soft: #e0e0e0;
+    
+    font-family: 'Sawarabi Mincho', 'Georgia', serif !important;
+    
+    /* Fundo Mágico (Céu e Flores) */
+    background: linear-gradient(to bottom, #e3f2fd, #f3e5f5);
+}
+
+/* Layout Flutuante */
+body.theme-frieren-ui .panels-row {
+    display: flex !important;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 80px);
+}
+
+/* Painéis de Vidro Mágico */
+body.theme-frieren-ui .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 2px solid #fff !important;
+    border-radius: 15px 50px 15px 50px !important; /* Formato orgânico */
+    box-shadow: 
+        0 10px 30px rgba(74, 93, 126, 0.1),
+        inset 0 0 0 2px #d4af37; /* Borda interna dourada */
+    backdrop-filter: blur(10px);
+}
+
+/* Timer Mágico */
+body.theme-frieren-ui .timer-circle-outer {
+    border: 2px double #d4af37 !important; /* Ouro */
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+body.theme-frieren-ui #timer {
+    color: #4a5d7e;
+    font-weight: normal;
+    text-shadow: 0 0 5px rgba(255,255,255,0.8);
+}
+
+/* Botões Decorados */
+body.theme-frieren-ui .btn-rural, 
+body.theme-frieren-ui .pill-tab {
+    border-radius: 20px !important;
+    border: 1px solid #d4af37 !important;
+    background: #fff !important;
+    color: #4a5d7e !important;
+    font-size: 0.8rem;
+    transition: 0.3s;
+}
+body.theme-frieren-ui .btn-rural:hover,
+body.theme-frieren-ui .pill-tab.active {
+    background: #d4af37 !important;
+    color: #fff !important;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+
+/* --------------------------------------------------------------------------
+   3. WIRED (LAIN) - Interface Digital Retro/Glitch
+   -------------------------------------------------------------------------- */
+body.theme-wired-ui {
+    --bg-paper: #0a0a0a;
+    --text-brown: #ff3333;   /* Vermelho Sangue Digital */
+    --text-gray: #666;
+    --primary-green: #ff3333;
+    --border-soft: #330000;
+    
+    font-family: 'Courier New', monospace !important;
+    background-color: #000;
+    /* Ruído estático no fundo */
+    background-image: repeating-radial-gradient(#111 0%, #000 100%);
+}
+
+/* Layout Desconectado */
+body.theme-wired-ui .panels-row {
+    display: grid !important;
+    grid-template-columns: 300px 1fr !important;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 
+        "timer content"
+        "timer content";
+    gap: 10px;
+    padding: 20px;
+    height: 90vh;
+}
+
+body.theme-wired-ui .timer-panel {
+    grid-area: timer;
+    border-right: 1px solid #ff3333;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.theme-wired-ui .diary-panel,
+body.theme-wired-ui .anime-panel {
+    grid-area: content;
+    background: rgba(10,10,10,0.8) !important;
+    border: 1px solid #333;
+    position: relative;
+}
+/* Linhas de conexão */
+body.theme-wired-ui .rural-panel::before {
+    content: 'CONNECTED...';
+    position: absolute; top: -15px; left: 0;
+    font-size: 10px; color: #ff3333; background: #000; padding: 2px;
+}
+
+body.theme-wired-ui #timer {
+    font-size: 3.5rem !important;
+    text-shadow: 2px 2px 0px rgba(255,0,0,0.5);
+    animation: glitch 3s infinite alternate; /* Efeito glitch simples */
+}
+
+@keyframes glitch {
+    0% { transform: skew(0deg); }
+    98% { transform: skew(0deg); }
+    99% { transform: skew(2deg); filter: hue-rotate(90deg); }
+    100% { transform: skew(-2deg); }
+}
+
+
+/* ==========================================================================
+   NOVOS TEMAS DE CONVERSÃO TOTAL (ACADÊMICO, CIÊNCIA, ESPAÇO, APOCALIPSE)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. ACADÊMICO (BIBLIOTHECA) - Livros Antigos, Couro e Latão
+   -------------------------------------------------------------------------- */
+body.theme-academic {
+    --bg-paper: #fdf5e6;     /* Papel Creme */
+    --text-brown: #2c1e12;   /* Tinta Marrom Escura */
+    --text-gray: #5d4037;
+    --primary-green: #1b4d3e; /* Verde Universidade/Lousa */
+    --border-soft: #cba87a;   /* Latão/Dourado envelhecido */
+    
+    background-color: #1a120b; /* Fundo Madeira Escura */
+    /* Textura de estante de livros no fundo (simulada) */
+    background-image: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+    font-family: 'Palatino Linotype', 'Book Antiqua', serif !important;
+}
+
+/* Barra Superior como Prateleira de Mogno com detalhes em Latão */
+body.theme-academic .top-bar {
+    background: #3d2b1f !important;
+    border-bottom: 3px solid #cba87a !important; /* Borda de latão */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5) !important;
+    color: #eaddca !important;
+}
+body.theme-academic .header-btn {
+    background: #2c1e12 !important; border: 1px solid #cba87a !important; color: #cba87a !important;
+}
+
+/* Painéis como Livros Abertos ou Quadros */
+body.theme-academic .rural-panel {
+    background: var(--bg-paper) !important;
+    /* Borda grossa parecendo capa de couro */
+    border: 6px solid #3d2b1f !important;
+    border-radius: 4px !important;
+    box-shadow: 
+        inset 0 0 30px rgba(44, 30, 18, 0.2), /* Sombra interna do papel */
+        0 15px 35px rgba(0,0,0,0.6) !important; /* Sombra na mesa */
+    position: relative;
+}
+/* Detalhe de canto de latão nos painéis */
+body.theme-academic .rural-panel::after {
+    content: ''; position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+    background: linear-gradient(45deg, #cba87a, #8c724f);
+    clip-path: polygon(0 0, 100% 0, 100% 100%); /* Triângulo no canto */
+    box-shadow: 2px 2px 2px rgba(0,0,0,0.3);
+}
+
+/* Timer estilo Relógio Antigo */
+body.theme-academic .timer-circle-outer {
+    border: 4px double #cba87a !important;
+    background: #1b4d3e !important; /* Fundo verde lousa */
+}
+body.theme-academic #timer {
+    color: #fdf5e6 !important; /* Texto cor de giz */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+
+/* --------------------------------------------------------------------------
+   2. CIÊNCIA (BLUEPRINT LAB) - Vidro, Hologramas e Dados
+   -------------------------------------------------------------------------- */
+body.theme-science {
+    --bg-paper: rgba(240, 248, 255, 0.9); /* Branco Gelo Translúcido */
+    --text-brown: #003366;   /* Azul Técnico Escuro */
+    --text-gray: #4682b4;    /* Azul Aço */
+    --primary-green: #00aaff; /* Ciano Brilhante */
+    --primary-hover: #0088cc;
+    --border-soft: #b0c4de;
+    
+    background-color: #f0f2f5; /* Cinza Laboratório Claro */
+    /* Fundo com grade milimetrada (blueprint) */
+    background-image: 
+        linear-gradient(rgba(0, 170, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 170, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    font-family: 'Segoe UI', 'Roboto', Helvetica, sans-serif !important;
+}
+
+/* Barra Superior Técnica */
+body.theme-science .top-bar {
+    background: #fff !important;
+    border-bottom: 2px solid var(--primary-green) !important;
+    box-shadow: 0 2px 10px rgba(0, 170, 255, 0.15) !important;
+}
+/* Adiciona um efeito de "scanline" no topo */
+body.theme-science .top-bar::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+    background: var(--primary-green);
+    box-shadow: 0 0 10px var(--primary-green);
+}
+
+/* Painéis como Tablets de Dados Holográficos */
+body.theme-science .rural-panel {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid var(--primary-green) !important;
+    border-radius: 8px !important;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 170, 255, 0.05),
+        0 5px 15px rgba(0, 170, 255, 0.1) !important;
+    backdrop-filter: blur(5px); /* Efeito de vidro fosco */
+    position: relative;
+    overflow: hidden;
+}
+/* Linha de scanner passando nos painéis */
+body.theme-science .rural-panel::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 170, 255, 0.2), transparent);
+    animation: scan 4s infinite linear; pointer-events: none;
+}
+@keyframes scan { 0% { left: -100%; } 100% { left: 200%; } }
+
+/* Timer Digital */
+body.theme-science .timer-circle-outer {
+    border: 2px solid var(--primary-green) !important;
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.3) !important;
+}
+body.theme-science #timer { font-family: monospace !important; letter-spacing: -2px; }
+
+
+/* --------------------------------------------------------------------------
+   3. ESPAÇO (COSMOS HUD) - Escuro, Estrelas e Luzes Neon
+   -------------------------------------------------------------------------- */
+body.theme-space {
+    --bg-paper: rgba(10, 14, 26, 0.85); /* Azul Espaço Profundo Translúcido */
+    --text-brown: #e0f7fa;   /* Branco Gelo Azulado */
+    --text-gray: #81d4fa;    /* Ciano Claro */
+    --primary-green: #7c4dff; /* Roxo Nebulosa Brilhante */
+    --primary-hover: #651fff;
+    --border-soft: #29b6f6;  /* Azul Ciano Borda */
+    
+    background-color: #000;
+    /* Fundo de Estrelas e Nebulosa */
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(124, 77, 255, 0.2), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(41, 182, 246, 0.2), transparent 40%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23FFF' stroke-width='1'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-14 737L-111 619.5-249 486-385 372-357 216-187 90-82-82 79 10 155-112 255 38 379-42 482 58 655 148 841 38 841 255 715 419 591 619.5 394 737 255 858 155 962 21 1076-111 1180'/%3E%3C/g%3E%3C/svg%3E"); /* Simulação de estrelas */
+    background-size: cover, cover, 400px 400px;
+    font-family: 'Montserrat', sans-serif !important;
+    color: var(--text-brown);
+}
+
+/* Barra Superior Translúcida (HUD) */
+body.theme-space .top-bar {
+    background: rgba(10, 14, 26, 0.6) !important;
+    border-bottom: 1px solid rgba(41, 182, 246, 0.5) !important;
+    backdrop-filter: blur(10px);
+}
+body.theme-space .header-btn {
+    background: rgba(124, 77, 255, 0.2) !important;
+    border: 1px solid var(--primary-green) !important;
+    color: #fff !important;
+}
+
+/* Painéis Flutuantes (HUD) */
+body.theme-space .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 0 20px rgba(41, 182, 246, 0.15), inset 0 0 20px rgba(10, 14, 26, 0.5) !important;
+    backdrop-filter: blur(8px);
+}
+
+/* Timer Reator */
+body.theme-space .timer-circle-outer {
+    background: radial-gradient(circle, rgba(124, 77, 255, 0.2) 0%, transparent 70%) !important;
+    border: 2px solid var(--primary-green) !important;
+    box-shadow: 0 0 30px rgba(124, 77, 255, 0.5) !important;
+}
+body.theme-space #timer {
+    text-shadow: 0 0 10px var(--primary-green);
+}
+body.theme-space .btn-rural.confirm {
+    background: linear-gradient(45deg, var(--primary-green), var(--border-soft)) !important;
+    border: none !important;
+    box-shadow: 0 0 15px var(--primary-green);
+}
+
+
+/* --------------------------------------------------------------------------
+   4. APOCALIPSE (WASTELAND) - Ferrugem, Sucata e Decadência
+   -------------------------------------------------------------------------- */
+body.theme-apocalypse {
+    --bg-paper: #2a2520;     /* Metal Sujo Escuro */
+    --text-brown: #c7b299;   /* Cor de Areia/Osso */
+    --text-gray: #8c7b6c;
+    --primary-green: #cd5c5c; /* Vermelho Índio / Ferrugem */
+    --primary-hover: #a52a2a;
+    --border-soft: #5c4033;   /* Marrom Ferrugem */
+    
+    background-color: #1b1714;
+    /* Textura de metal arranhado e sujo */
+    background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 5px), linear-gradient(to bottom, #2a2218, #1b1714);
+    font-family: 'Courier New', 'Impact', monospace !important; /* Fonte estilo máquina de escrever quebrada */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Barra Superior de Metal Rebitado */
+body.theme-apocalypse .top-bar {
+    background: #382e24 !important;
+    border-bottom: 3px dashed #5c4033 !important; /* Borda tracejada parece solda ruim */
+    box-shadow: 0 5px 0px rgba(0,0,0,0.8) !important;
+}
+
+/* Painéis de Sucata Metálica */
+body.theme-apocalypse .rural-panel {
+    background: var(--bg-paper) !important;
+    /* Borda complexa simulando metal enferrujado */
+    border: 4px solid transparent !important;
+    border-image: linear-gradient(to bottom right, #8b4513, #cd5c5c, #5c4033, #2a2520) 1 !important;
+    border-radius: 0px !important;
+    box-shadow: 
+        inset 0 0 50px rgba(0,0,0,0.8), /* Sombra interna de sujeira */
+        5px 5px 0px rgba(0,0,0,1) !important; /* Sombra dura externa */
+    position: relative;
+}
+/* Rebites nos cantos */
+body.theme-apocalypse .rural-panel::before,
+body.theme-apocalypse .rural-panel::after {
+    content: 'X'; position: absolute; color: #5c4033; font-weight: bold; font-family: sans-serif;
+}
+body.theme-apocalypse .rural-panel::before { top: 2px; left: 5px; }
+body.theme-apocalypse .rural-panel::after { bottom: 2px; right: 5px; }
+
+/* Timer Geiger Counter */
+body.theme-apocalypse .timer-circle-outer {
+    border: 3px dotted #cd5c5c !important;
+    background: #1a1510 !important;
+    border-radius: 10px !important; /* Quadrado arredondado */
+}
+body.theme-apocalypse #timer {
+    color: #cd5c5c !important;
+    text-shadow: 2px 2px 0px #000;
+}
+body.theme-apocalypse .btn-rural {
+    background: #382e24 !important; border: 2px solid #5c4033 !important; color: #c7b299 !important; box-shadow: 3px 3px 0 #000 !important;
+}
+body.theme-apocalypse .btn-rural:hover { top: 2px; box-shadow: 1px 1px 0 #000 !important; background: #cd5c5c !important; color: #000 !important;}
+
+
+/* ==========================================================================
+   NOVOS TEMAS: FILOSOFIA, PENSADORES, NGNL, HIKIKOMORI
+   (Com suporte total a Dark Mode)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. FILOSOFIA (O TEMPLO GREGO)
+   -------------------------------------------------------------------------- */
+body.theme-philosophy {
+    /* CLARO: Mármore Branco */
+    --bg-paper: #f5f5f5;
+    --text-brown: #222;
+    --text-gray: #666;
+    --primary-green: #555;
+    --border-soft: #ccc;
+    
+    background-color: #e0e0e0;
+    /* Textura de Mármore simulada */
+    background-image: 
+        radial-gradient(circle, rgba(0,0,0,0.02) 50%, transparent 60%),
+        linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6),
+        linear-gradient(45deg, #e6e6e6 25%, transparent 25%, transparent 75%, #e6e6e6 75%, #e6e6e6);
+    background-size: 20px 20px;
+    font-family: 'Times New Roman', serif !important;
+}
+
+/* ESCURO: Templo de Obsidiana e Ouro */
+body.theme-philosophy.dark-mode {
+    --bg-paper: #1a1a1a;
+    --text-brown: #d4af37; /* Ouro */
+    --text-gray: #888;
+    --primary-green: #d4af37;
+    --border-soft: #333;
+    background-color: #050505;
+    background-image: none;
+}
+
+/* Estilização de Coluna Grega */
+body.theme-philosophy .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 4px ridge var(--border-soft) !important; /* Borda esculpida */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-radius: 2px !important;
+}
+body.theme-philosophy .top-bar {
+    background: var(--bg-paper) !important;
+    border-bottom: 4px double var(--text-brown) !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+body.theme-philosophy .timer-circle-outer {
+    border: 6px double var(--text-brown) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   2. PENSADORES (DARK ACADEMIA / BIBLIOTECA)
+   -------------------------------------------------------------------------- */
+body.theme-thinkers {
+    /* CLARO: Papel Envelhecido e Madeira */
+    --bg-paper: #e3dcd2;
+    --text-brown: #2b1b17; /* Café */
+    --text-gray: #594a42;
+    --primary-green: #382e24;
+    --border-soft: #8f7968;
+    
+    background-color: #3e2723;
+    /* Textura de Madeira */
+    background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 10px);
+    font-family: 'Garamond', 'Georgia', serif !important;
+}
+
+/* ESCURO: Biblioteca à Noite (Couro e Luz de Vela) */
+body.theme-thinkers.dark-mode {
+    --bg-paper: #1c1410; /* Couro Escuro */
+    --text-brown: #cbbfa8; /* Papel velho */
+    --text-gray: #6d5e56;
+    --primary-green: #d2b48c; /* Tan */
+    --border-soft: #3e2723;
+    background-color: #0d0907;
+}
+
+/* Estilo Livro de Capa Dura */
+body.theme-thinkers .rural-panel {
+    background: var(--bg-paper) !important;
+    border-left: 6px solid var(--text-brown) !important; /* Lombada do livro */
+    border-right: 1px solid var(--border-soft) !important;
+    border-top: 1px solid var(--border-soft) !important;
+    border-bottom: 1px solid var(--border-soft) !important;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+    border-radius: 2px 6px 6px 2px !important;
+}
+body.theme-thinkers #timer {
+    font-style: italic;
+    border-bottom: 1px solid var(--text-gray);
+}
+
+
+/* --------------------------------------------------------------------------
+   3. NO GAME NO LIFE (DISBOARD FANTASY)
+   -------------------------------------------------------------------------- */
+body.theme-ngnl {
+    /* CLARO: Explosão de Cores e Luz */
+    --bg-paper: rgba(255, 255, 255, 0.8);
+    --text-brown: #e91e63; /* Pink */
+    --text-gray: #9c27b0;  /* Roxo */
+    --primary-green: #00bcd4; /* Ciano */
+    --border-soft: #ff4081;
+    
+    background: linear-gradient(135deg, #fce4ec, #e1bee7, #e0f7fa);
+    font-family: 'Comic Sans MS', 'Verdana', sans-serif !important; /* Fonte lúdica */
+}
+
+/* ESCURO: Mundo dos Jogos Neon */
+body.theme-ngnl.dark-mode {
+    --bg-paper: rgba(30, 5, 40, 0.85); /* Roxo Escuro */
+    --text-brown: #ff80ab; /* Rosa Neon */
+    --text-gray: #ea80fc;  /* Roxo Neon */
+    --primary-green: #69f0ae; /* Verde Neon */
+    --border-soft: #b388ff;
+    background: linear-gradient(135deg, #311b92, #880e4f, #006064);
+}
+
+/* Fundo Xadrez (Marca registrada NGNL) */
+body.theme-ngnl::before {
+    content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+        linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%, rgba(255,255,255,0.1)), 
+        linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.1) 75%, rgba(255,255,255,0.1));
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    pointer-events: none; z-index: -1;
+}
+
+/* Painéis de Vidro Colorido */
+body.theme-ngnl .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 2px solid var(--primary-green) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 0 15px var(--text-brown), inset 0 0 20px rgba(255, 64, 129, 0.2);
+    backdrop-filter: blur(5px);
+}
+body.theme-ngnl .timer-circle-outer {
+    border: 4px solid transparent !important;
+    background: linear-gradient(white, white) padding-box, 
+                linear-gradient(to right, #ff4081, #00e5ff) border-box !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   4. HIKIKOMORI (THE SAFE ROOM)
+   -------------------------------------------------------------------------- */
+body.theme-hikikomori {
+    /* CLARO: Dia Nublado / Cortinas Fechadas */
+    --bg-paper: #e0e5ec;
+    --text-brown: #4a5568;
+    --text-gray: #a0aec0;
+    --primary-green: #718096;
+    --border-soft: #cbd5e0;
+    
+    background-color: #cbd5e0;
+    font-family: 'Consolas', monospace !important;
+}
+
+/* ESCURO: 3:00 AM (Monitor Glow) */
+body.theme-hikikomori.dark-mode {
+    --bg-paper: #0f1115; /* Quase preto */
+    --text-brown: #a0aec0;
+    --text-gray: #4a5568;
+    --primary-green: #63b3ed; /* Azul Monitor */
+    --border-soft: #2d3748;
+    background-color: #000;
+}
+
+/* Estilo Neumorphism (Soft UI) para o Claro / Glow para o Escuro */
+body.theme-hikikomori .rural-panel {
+    background: var(--bg-paper) !important;
+    border-radius: 20px !important;
+    border: none !important;
+}
+
+/* Sombra Suave (Neumorphism) no Claro */
+body.theme-hikikomori:not(.dark-mode) .rural-panel {
+    box-shadow: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255, 0.5);
+}
+
+/* Brilho de Monitor no Escuro */
+body.theme-hikikomori.dark-mode .rural-panel {
+    box-shadow: 0 0 20px rgba(66, 153, 225, 0.1); /* Glow azul fraco */
+    border: 1px solid #1a202c !important;
+}
+
+body.theme-hikikomori.dark-mode #timer {
+    color: #63b3ed;
+    text-shadow: 0 0 10px #63b3ed;
+}
+body.theme-hikikomori .btn-rural {
+    border-radius: 10px !important;
+}
+
+/* ==========================================================================
+   MY CHOICE: 5 RADICAL TOTAL CONVERSIONS
+   ========================================================================== */
+
+/* ==========================================================================
+   WINDOWS EVOLUTION (98, 7, 10) - TOTAL CONVERSIONS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. WINDOWS 98 (CLASSIC) - Corrigido & Dark Mode
+   -------------------------------------------------------------------------- */
+body.theme-retro98 {
+    /* CLARO: Cinza Clássico */
+    --bg-paper: #c0c0c0;
+    --text-brown: #000;
+    --text-gray: #444;
+    --primary-green: #000080; /* Azul Título */
+    --border-soft: #dfdfdf;
+    
+    background-color: #008080; /* Teal Desktop */
+    font-family: 'Courier New', 'MS Sans Serif', monospace !important;
+}
+
+/* ESCURO: High Contrast Black (Hacker Style) */
+body.theme-retro98.dark-mode {
+    --bg-paper: #000;
+    --text-brown: #0f0; /* Verde Terminal */
+    --text-gray: #008000;
+    --primary-green: #fff; /* Título Branco */
+    --border-soft: #0f0;
+    background-color: #000;
+    background-image: none;
+}
+
+/* --- CORREÇÃO DE LAYOUT: Levanta o conteúdo --- */
+body.theme-retro98 .panels-row {
+    padding-bottom: 180px !important; /* Espaço extra embaixo */
+    align-items: flex-start !important; /* Começa do topo */
+    margin-top: 20px !important;
+}
+
+/* Barra de Tarefas (Rodapé) */
+body.theme-retro98 .top-bar {
+    position: fixed !important; bottom: 0 !important; top: auto !important; left: 0 !important; width: 100% !important;
+    background: var(--bg-paper) !important;
+    border-top: 2px solid #fff !important;
+    padding: 4px !important;
+    z-index: 9999;
+    justify-content: flex-start !important; gap: 5px;
+    box-shadow: inset 0 1px 0 #fff;
+}
+/* Botão Iniciar */
+body.theme-retro98 .top-bar::before {
+    content: 'Start'; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; background: var(--bg-paper); color: var(--text-brown);
+    border: 2px solid #fff; border-right-color: #444; border-bottom-color: #444;
+    padding: 2px 10px; margin-right: 10px; 
+    box-shadow: 1px 1px 0 #000;
+    background-image: linear-gradient(90deg, transparent 0%, transparent 100%); /* Hack para forçar render */
+}
+/* Ajuste do botão Iniciar no Dark Mode */
+body.theme-retro98.dark-mode .top-bar::before {
+    border-color: #0f0; color: #0f0; background: #000;
+}
+
+/* Janelas (Painéis) */
+body.theme-retro98 .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 2px solid #fff !important;
+    border-right-color: #444 !important; border-bottom-color: #444 !important;
+    box-shadow: 2px 2px 0 #000 !important;
+    padding: 25px 10px 10px 10px !important;
+    border-radius: 0 !important;
+    position: relative;
+    margin-bottom: 20px; /* Garante separação */
+}
+
+/* Barra de Título da Janela */
+body.theme-retro98 .rural-panel::before {
+    content: 'Program Manager'; position: absolute; top: 3px; left: 3px; right: 3px; height: 18px;
+    background: var(--primary-green); color: #fff; font-size: 11px; font-weight: bold;
+    display: flex; align-items: center; padding-left: 5px;
+}
+body.theme-retro98.dark-mode .rural-panel::before {
+    background: #0f0; color: #000; /* Inverte no dark mode */
+}
+
+/* Botões com relevo clássico */
+body.theme-retro98 .btn-rural, body.theme-retro98 .pill-tab {
+    background: var(--bg-paper) !important;
+    border: 2px solid #fff !important;
+    border-right-color: #444 !important; border-bottom-color: #444 !important;
+    box-shadow: 1px 1px 0 #000 !important; color: var(--text-brown) !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   2. WINDOWS 7 (AERO GLASS) - Transparência e Brilho
+   -------------------------------------------------------------------------- */
+body.theme-win7 {
+    /* CLARO: Aero Sky */
+    --bg-paper: rgba(255, 255, 255, 0.6);
+    --text-brown: #000;
+    --text-gray: #333;
+    --primary-green: #1e5799; /* Azul Aero */
+    --border-soft: rgba(255,255,255,0.8);
+    
+    /* Wallpaper Padrão Win 7 */
+    background: linear-gradient(135deg, #0072bc, #00c6d7, #ffffff);
+    background-attachment: fixed;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+/* ESCURO: Aero Night */
+body.theme-win7.dark-mode {
+    --bg-paper: rgba(0, 0, 0, 0.6);
+    --text-brown: #fff;
+    --text-gray: #ccc;
+    background: linear-gradient(135deg, #000000, #1a237e, #000000);
+}
+
+/* Barra de Tarefas Glassy */
+body.theme-win7 .top-bar {
+    position: fixed !important; bottom: 0 !important; top: auto !important; left: 0 !important; width: 100% !important;
+    background: rgba(10, 20, 30, 0.7) !important; /* Vidro escuro */
+    border-top: 1px solid rgba(255,255,255,0.3) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    padding: 8px 15px !important;
+    z-index: 9999;
+    justify-content: flex-start !important;
+}
+/* Botão Iniciar (Orbe) */
+body.theme-win7 .top-bar::before {
+    content: ''; display: block; width: 30px; height: 30px; margin-right: 15px;
+    background: radial-gradient(circle at 50% 50%, #00f2ff, #0051ff, #002244);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.6), inset 0 2px 5px rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,0,0,0.5);
+}
+
+/* Janelas de Vidro (Aero) */
+body.theme-win7 .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 1px solid rgba(255,255,255,0.5) !important;
+    border-radius: 8px !important;
+    box-shadow: 
+        0 0 5px rgba(0,0,0,0.1),
+        0 10px 20px rgba(0,0,0,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.6); /* Brilho na borda superior */
+    backdrop-filter: blur(15px);
+    padding-top: 30px !important; /* Espaço para a barra de título */
+    position: relative;
+    margin-bottom: 100px;
+}
+
+/* Barra de Título (Fake) */
+body.theme-win7 .rural-panel::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 25px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.2), transparent);
+    border-radius: 8px 8px 0 0;
+}
+/* Botões de Janela (Min/Max/Close) */
+body.theme-win7 .rural-panel::after {
+    content: ''; position: absolute; top: 8px; right: 10px; width: 40px; height: 10px;
+    background: #d55; /* Vermelho fechar */
+    border-radius: 2px;
+    box-shadow: -15px 0 0 #ccc, -30px 0 0 #ccc; /* Amarelo e verde simulados */
+}
+
+/* Botões UI */
+body.theme-win7 .btn-rural {
+    background: linear-gradient(to bottom, #f0f0f0, #d0d0d0) !important;
+    border: 1px solid #999 !important;
+    border-radius: 3px !important;
+    box-shadow: inset 0 1px 0 #fff;
+}
+body.theme-win7.dark-mode .btn-rural {
+    background: linear-gradient(to bottom, #444, #222) !important;
+    color: #fff !important; border-color: #000 !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   3. WINDOWS 10 (METRO / FLUENT) - Flat, Dark e Moderno
+   -------------------------------------------------------------------------- */
+body.theme-win10 {
+    /* CLARO: Light Theme */
+    --bg-paper: #ffffff;
+    --text-brown: #000;
+    --text-gray: #666;
+    --primary-green: #0078d7; /* Azul Microsoft */
+    --border-soft: #e5e5e5;
+    
+    background-color: #f2f2f2;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f2f2f2'/%3E%3Cstop offset='1' stop-color='%23e6e6e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23a)'/%3E%3C/svg%3E");
+    font-family: 'Segoe UI', sans-serif !important;
+}
+
+/* ESCURO: Dark Theme (O mais comum) */
+body.theme-win10.dark-mode {
+    --bg-paper: #1f1f1f; /* Cinza Acrylic */
+    --text-brown: #fff;
+    --text-gray: #aaa;
+    --primary-green: #0078d7;
+    --border-soft: #333;
+    background-color: #111;
+    background-image: none;
+}
+
+/* Layout Espaçado */
+body.theme-win10 .panels-row {
+    padding-bottom: 60px !important;
+    gap: 15px !important;
+}
+
+/* Barra de Tarefas Flat Black */
+body.theme-win10 .top-bar {
+    position: fixed !important; bottom: 0 !important; top: auto !important; left: 0 !important; width: 100% !important;
+    background: #111 !important;
+    border-top: 1px solid #333 !important;
+    color: #fff !important;
+    padding: 0 15px !important; height: 48px;
+    z-index: 9999;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+/* Botão Iniciar (Logo Windows Minimalista) */
+body.theme-win10 .top-bar::before {
+    content: '❖'; /* Símbolo aproximado */
+    font-size: 20px; color: #fff; margin-right: 20px; opacity: 0.8;
+}
+body.theme-win10 .top-bar button {
+    background: transparent !important; color: #fff !important; border: none !important;
+    border-radius: 0 !important;
+}
+body.theme-win10 .top-bar button:hover { background: #333 !important; }
+
+/* Janelas (Fluent Design - Acrylic simulation) */
+body.theme-win10 .rural-panel {
+    background: var(--bg-paper) !important;
+    border: 1px solid var(--border-soft) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 0px !important; /* Cantos quadrados */
+    padding: 20px !important;
+}
+/* Efeito de borda colorida no topo (Active Window) */
+body.theme-win10 .timer-panel { border-top: 2px solid var(--primary-green) !important; }
+
+/* Timer Fino */
+body.theme-win10 #timer {
+    font-weight: 300 !important; /* Light font */
+}
+body.theme-win10 .timer-circle-outer {
+    border: 4px solid var(--border-soft) !important;
+    border-top-color: var(--primary-green) !important; /* Anel de progresso estilo Win 10 */
+}
+
+/* Botões Retangulares */
+body.theme-win10 .btn-rural, body.theme-win10 .pill-tab {
+    border-radius: 2px !important;
+    background: #ccc; border: none !important;
+    font-weight: 600;
+}
+body.theme-win10.dark-mode .btn-rural {
+    background: #333; color: #fff;
+}
+body.theme-win10 .btn-rural.confirm {
+    background: var(--primary-green) !important; color: #fff !important;
+}
+/* --------------------------------------------------------------------------
+   2. SWISS (EDITORIAL DESIGN) - Tela Dividida / Tipografia Gigante
+   -------------------------------------------------------------------------- */
+body.theme-swiss {
+    --bg-paper: #fff;
+    --text-brown: #000;
+    --text-gray: #000;
+    --primary-green: #ff3300; /* Vermelho Suíço */
+    
+    background-color: #f0f0f0;
+    font-family: 'Helvetica Neue', 'Arial Black', sans-serif !important;
+    overflow: hidden; /* Sem scroll na janela principal */
+}
+
+/* Layout Split Screen (Esquerda Colorida / Direita Branca) */
+body.theme-swiss .panels-row {
+    display: grid !important;
+    grid-template-columns: 40% 60% !important;
+    grid-template-rows: 100vh !important;
+    gap: 0 !important;
+    width: 100vw !important; max-width: 100vw !important;
+    margin: 0 !important; padding: 0 !important;
+    position: fixed; top: 0; left: 0;
+}
+
+/* Lado Esquerdo: O Timer */
+body.theme-swiss .timer-panel {
+    background: var(--primary-green) !important;
+    display: flex !important; flex-direction: column; justify-content: center;
+    border: none !important; border-radius: 0 !important;
+    padding: 40px !important;
+}
+body.theme-swiss .timer-circle-outer {
+    border: none !important; width: auto !important; height: auto !important;
+    background: transparent !important; box-shadow: none !important;
+}
+body.theme-swiss #timer {
+    font-size: 15vw !important; /* GIGANTE */
+    color: #fff !important; font-weight: 900 !important;
+    line-height: 0.8; letter-spacing: -5px;
+}
+body.theme-swiss .timer-controls { transform: scale(1.5); transform-origin: left; }
+
+/* Lado Direito: Conteúdo */
+body.theme-swiss .diary-panel, body.theme-swiss .anime-panel {
+    border: none !important; border-radius: 0 !important;
+    background: #fff !important;
+    border-left: 1px solid #000 !important;
+    padding: 50px !important;
+    overflow-y: auto; /* Scroll apenas aqui */
+}
+/* Esconde Anime panel se quiser focar no diary, ou empilha */
+body.theme-swiss .anime-panel { display: none !important; } /* Simplificação radical */
+
+/* Barra Superior Minimalista */
+body.theme-swiss .top-bar {
+    position: fixed; top: 20px; right: 20px; width: auto !important;
+    background: #000 !important; color: #fff !important;
+    padding: 10px 20px !important; border-radius: 0 !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   3. VHS (ANALOG HORROR) - Scanlines, Glitch e Escuridão
+   -------------------------------------------------------------------------- */
+body.theme-vhs {
+    --bg-paper: #000022; /* Azul Noite Profunda */
+    --text-brown: #ddd;
+    --text-gray: #888;
+    --primary-green: #fff;
+    
+    background-color: #050505;
+    font-family: 'Courier', monospace !important;
+    text-transform: uppercase;
+}
+
+/* Efeito CRT e Scanlines no Corpo todo */
+body.theme-vhs::before {
+    content: "PLAY > 00:00:00"; position: fixed; top: 20px; left: 20px;
+    font-size: 24px; color: rgba(255,255,255,0.5); z-index: 9999;
+    text-shadow: 2px 0 red, -2px 0 blue; pointer-events: none;
+}
+body.theme-vhs::after {
+    content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none;
+}
+
+/* Layout Levemente Distorcido */
+body.theme-vhs .panels-row {
+    filter: blur(0.5px) contrast(1.2);
+    transform: perspective(1000px) rotateX(1deg); /* Curvatura de tela */
+    width: 90%; margin: 50px auto;
+}
+
+body.theme-vhs .rural-panel {
+    background: transparent !important;
+    border: 2px solid #fff !important;
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    border-radius: 10px;
+    text-shadow: 2px 0 rgba(255,0,0,0.5), -2px 0 rgba(0,0,255,0.5); /* Aberração Cromática */
+}
+
+body.theme-vhs #timer {
+    font-family: monospace !important;
+    text-shadow: 4px 0 red, -4px 0 blue;
+    animation: jitter 0.2s infinite;
+}
+@keyframes jitter { 0% { transform: translateX(0); } 20% { transform: translateX(-1px); } 40% { transform: translateX(1px); } 100% { transform: translateX(0); } }
+
+
+/* --------------------------------------------------------------------------
+   4. Y2K (FRUTIGER AERO) - Glossy, Bolhas e Futuro Otimista (2000s)
+   -------------------------------------------------------------------------- */
+body.theme-y2k {
+    --bg-paper: rgba(255,255,255,0.8);
+    --text-brown: #0099cc;
+    --text-gray: #666;
+    --primary-green: #8bc34a; /* Verde Lima */
+    
+    /* Gradiente Aurora Boreal */
+    background: linear-gradient(to bottom, #87ceeb, #e0f7fa, #ffffff);
+    background-attachment: fixed;
+    font-family: 'Verdana', sans-serif !important;
+}
+
+/* Elementos de Vidro Glossy */
+body.theme-y2k .rural-panel {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.5)) !important;
+    border: 1px solid #fff !important;
+    border-radius: 20px !important;
+    box-shadow: 
+        0 5px 15px rgba(0,153,204,0.2),
+        inset 0 10px 20px rgba(255,255,255,0.8); /* Brilho superior */
+    backdrop-filter: blur(4px);
+}
+
+/* Botões Gelatinosos */
+body.theme-y2k .btn-rural, body.theme-y2k .pill-tab {
+    border-radius: 30px !important;
+    background: linear-gradient(to bottom, #4fc3f7, #0288d1) !important;
+    border: 1px solid #81d4fa !important;
+    color: #fff !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), inset 0 5px 5px rgba(255,255,255,0.4);
+    font-weight: bold;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+}
+
+body.theme-y2k .timer-circle-outer {
+    border: 8px solid rgba(255,255,255,0.5) !important;
+    background: linear-gradient(135deg, #aed581, #33691e); /* Orbe Verde */
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.2);
+}
+body.theme-y2k #timer { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+
+/* --------------------------------------------------------------------------
+   5. NEWSPAPER (PUNK ZINE) - Colagem, Recortes e Caos
+   -------------------------------------------------------------------------- */
+body.theme-newspaper {
+    --bg-paper: #f0f0f0;
+    --text-brown: #000;
+    --primary-green: #000;
+    
+    background-color: #333;
+    /* Textura de cortiça ou parede suja */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23444' fill-opacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    font-family: 'Courier New', serif !important;
+}
+
+/* Painéis como Recortes de Papel Rasgado */
+body.theme-newspaper .panels-row {
+    display: flex !important; flex-wrap: wrap; justify-content: center; gap: 40px;
+    padding-top: 50px;
+}
+
+body.theme-newspaper .rural-panel {
+    background: #fff !important;
+    color: #000 !important;
+    border: none !important;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+    padding: 20px !important;
+    max-width: 400px;
+}
+
+/* Rotação Aleatória nos Elementos (Caos) */
+body.theme-newspaper .timer-panel { transform: rotate(-2deg); z-index: 2; }
+body.theme-newspaper .diary-panel { transform: rotate(1deg); z-index: 1; background: #fdfd96 !important; /* Post-it amarelo */ }
+body.theme-newspaper .anime-panel { transform: rotate(-1.5deg); z-index: 1; }
+
+/* Título estilo Manchete */
+body.theme-newspaper #timer {
+    font-family: 'Impact', sans-serif !important;
+    font-size: 5rem !important;
+    background: #000; color: #fff !important;
+    padding: 0 10px;
+    transform: rotate(3deg);
+}
+
+/* Botões como fita adesiva */
+body.theme-newspaper .btn-rural {
+    background: rgba(255,255,255,0.8) !important;
+    border: 1px dashed #000 !important;
+    transform: rotate(-1deg);
+}
+
+/* Cards de Matéria */
+.subject-card {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 15px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+.subject-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-color: var(--primary-green);
+}
+
+.subject-icon { font-size: 1.8rem; }
+.subject-name { font-weight: bold; font-size: 0.9rem; color: var(--text-brown); }
+.subject-time { font-size: 0.75rem; color: var(--text-gray); }
+
+/* Botão de apagar matéria (pequeno X) */
+.delete-subject-btn {
+    position: absolute; top: 2px; right: 5px;
+    font-size: 0.7rem; color: #ff4444; opacity: 0;
+    transition: 0.2s;
+}
+.subject-card:hover .delete-subject-btn { opacity: 1; }
+
+/* ==========================================================================
+   NOVAS TAGS (ESTILO CÁPSULA MODERNA)
+   ========================================================================== */
+
+/* Container das tags */
+.daily-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    padding: 8px 0;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed var(--border-soft); /* Linha divisória sutil */
+}
+
+/* A Tag individual */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--bg-paper); /* Fundo do tema */
+    border: 1px solid var(--border-soft);
+    border-radius: 20px; /* Formato de pílula */
+    padding: 3px 4px 3px 10px; /* Espaço para o texto e a bolinha */
+    font-size: 0.75rem;
+    color: var(--text-brown);
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: transform 0.2s;
+    cursor: default;
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+    border-color: var(--primary-green);
+}
+
+/* A bolinha com o número */
+.chip-badge {
+    background-color: var(--primary-green);
+    color: #fff; /* Texto sempre branco na bolinha */
+    font-size: 0.65rem;
+    font-weight: bold;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* Ajustes para Modo Dark (Ficar mais sutil) */
+body.dark-mode .chip {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+}
+
+
+/* ==========================================================================
+   CORREÇÃO DE INPUTS NO MODO ESCURO (TEXTO BRANCO NO FUNDO BRANCO)
+   ========================================================================== */
+
+/* Quando o corpo estiver em dark-mode, mude o estilo dos inputs */
+body.dark-mode input[type="text"],
+body.dark-mode .rural-input,
+body.dark-mode textarea {
+    background-color: rgba(0, 0, 0, 0.4) !important; /* Fundo Escuro Translúcido */
+    color: #fff !important;       /* Texto Branco */
+    border: 1px solid #555 !important; /* Borda Cinza */
+}
+
+/* Efeito ao clicar para digitar (Foco) */
+body.dark-mode input[type="text"]:focus,
+body.dark-mode .rural-input:focus,
+body.dark-mode textarea:focus {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    border-color: var(--primary-green) !important;
+    outline: none;
+}
+
+/* Garante que o placeholder (texto de exemplo) seja visível */
+body.dark-mode ::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+
+/* ==========================================================================
+   LAYOUT DIÁRIO: HISTÓRICO FIXO + CARDS EXPANSIVOS
+   ========================================================================== */
+
+/* 1. Janela Principal */
+.diary-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+/* 2. Wrapper Interno */
+.panel-content-scrollable {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important; /* Ocupa tudo */
+    height: 100% !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* 3. HISTÓRICO (FIXO E PEQUENO) */
+.logs-area {
+    /* Altura TRAVADA. Se passar disso, aparece barra. */
+    height: 140px !important; 
+    min-height: 140px !important;
+    flex: 0 0 auto !important; /* Não estica nem encolhe */
+    
+    overflow-y: auto !important; /* Scroll OBRIGATÓRIO se passar */
+    
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 5px 10px !important;
+}
+
+/* 4. RODAPÉ (OCUPA O RESTO DA TELA) */
+.diary-footer {
+    flex: 1 !important; /* MÁGICA: Ocupa todo o espaço que sobrar para baixo */
+    display: flex !important;
+    flex-direction: column !important;
+    
+    padding: 5px !important;
+    background: var(--bg-paper);
+    overflow: hidden !important; /* O scroll será no grid interno */
+}
+
+/* Tags e Barrinhas não encolhem */
+.daily-chips, .stats-bars-container, .footer-actions {
+    flex-shrink: 0 !important;
+}
+
+/* 5. LISTA DE CARDS (PREENCHE O RODAPÉ) */
+#stats-list-dynamic {
+    flex: 1 !important; /* Cresce para ocupar o rodapé */
+    
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
+    grid-auto-rows: max-content; /* Altura dos cards */
+    gap: 8px !important;
+    align-content: start !important;
+    
+    overflow-y: auto !important; /* Scroll aqui se tiver MUITOS cards */
+    
+    padding: 2px;
+    margin-bottom: 5px;
+    
+    /* Removemos max-height antigo para ele usar o espaço livre */
+    max-height: none !important; 
+    height: 100% !important;
+}
+
+/* Barra de Rolagem Visível */
+.logs-area::-webkit-scrollbar,
+#stats-list-dynamic::-webkit-scrollbar {
+    width: 10px;
+}
+.logs-area::-webkit-scrollbar-thumb,
+#stats-list-dynamic::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 5px;
+    border: 2px solid #fff;
+}
+
+/* ==========================================================================
+   CORREÇÃO FINAL DE LAYOUT: DIÁRIO (HIERARQUIA ESTRITA)
+   ========================================================================== */
+
+/* 1. O Painel Diário (Container Pai) */
+.diary-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important; /* Respeita a altura da linha de painéis */
+    overflow: hidden !important;
+}
+
+/* 2. O Wrapper de Conteúdo (Onde a mágica acontece) */
+.panel-content-scrollable {
+    flex: 1 !important; /* Ocupa todo o espaço vertical disponível */
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; /* Sem barra de rolagem externa */
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* 3. ÁREA DE HISTÓRICO (Tamanho Fixo + Scroll Forçado) */
+.logs-area {
+    /* Define tamanho fixo. Não estica, não encolhe. */
+    flex: 0 0 140px !important; 
+    height: 140px !important;
+    
+    /* FORÇA a barra de rolagem a aparecer, mesmo se tiver poucos itens */
+    overflow-y: scroll !important; 
+    
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 5px 0 !important; /* Remove padding lateral para barra encostar */
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+/* Estilo da lista para alinhar com o scroll */
+.log-list-clean {
+    padding: 0 10px !important; /* Padding interno na lista */
+}
+/* ==========================================================================
+   CORREÇÃO DO HISTÓRICO (ALINHAMENTO PERFEITO + SCROLL)
+   ========================================================================== */
+
+/* 1. O Container do Histórico */
+.logs-area {
+    /* Tamanho Fixo */
+    height: 140px !important;
+    min-height: 140px !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+
+    /* Scroll: Automático na vertical, PROIBIDO na horizontal */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    /* Remove padding do container para a barra de scroll ficar na borda */
+    padding: 0 !important; 
+    margin: 0 !important;
+    
+    background: rgba(0,0,0,0.02);
+    border-bottom: 1px solid var(--border-soft);
+}
+
+/* 2. A Lista (UL) */
+.log-list-clean {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+/* 3. O Item Individual (LI) - A Linha do Log */
+.log-item-clean {
+    display: flex !important;
+    justify-content: space-between !important; /* Joga um pra esq, outro pra dir */
+    align-items: center !important;
+    
+    width: 100% !important;
+    /* Box-sizing é vital: garante que o padding não aumente a largura total */
+    box-sizing: border-box !important; 
+    padding: 8px 12px !important; /* Espaçamento interno */
+    
+    border-bottom: 1px dashed var(--border-soft);
+}
+
+/* 4. Lado Esquerdo (Ícone + Nome) */
+.log-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    
+    flex: 1 !important; /* Ocupa todo o espaço disponível */
+    min-width: 0 !important; /* O SEGREDO: Impede que o texto empurre a div para fora */
+}
+
+/* Ícone */
+.log-icon {
+    flex-shrink: 0 !important; /* Ícone nunca encolhe */
+    width: 24px; text-align: center;
+}
+
+/* Texto (Data e Nome) */
+.log-info {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; /* Corta o excesso */
+}
+
+.log-name {
+    font-weight: bold;
+    color: var(--text-brown);
+    
+    /* Corta o texto com '...' se for muito longo */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 5. Lado Direito (Tempo) */
+.log-plus {
+    flex-shrink: 0 !important; /* Garante que o tempo NUNCA suma ou encolha */
+    font-weight: bold;
+    color: var(--primary-green);
+    margin-left: 10px; /* Separa do nome */
+    text-align: right;
+}
+
+/* --- BARRA DE ROLAGEM VISÍVEL --- */
+.logs-area::-webkit-scrollbar {
+    width: 8px !important; /* Largura da barra */
+}
+.logs-area::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05); /* Fundo do trilho */
+}
+.logs-area::-webkit-scrollbar-thumb {
+    background-color: #bbb; /* Cor da barra */
+    border-radius: 4px; /* Arredondado */
+    border: 2px solid transparent; /* Truque para criar margem */
+    background-clip: content-box;
+}
+.logs-area::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-green); /* Cor ao passar o mouse */
+}
+
+/* 4. O RODAPÉ (Expansivo) */
+.diary-footer {
+    flex: 1 !important; /* Pega TODO o espaço que sobrar abaixo do histórico */
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important; /* O scroll é interno nos cards */
+    padding: 10px !important;
+    background: var(--bg-paper);
+}
+
+/* Elementos fixos do rodapé */
+.daily-chips, 
+.stats-bars-container, 
+.footer-actions {
+    flex-shrink: 0 !important; /* Não encolhem */
+}
+
+/* 5. A LISTA DE CARDS (Ocupa o resto do rodapé) */
+#stats-list-dynamic {
+    flex: 1 !important; /* Cresce para preencher o rodapé */
+    height: 100% !important; /* Garante altura total */
+    min-height: 0 !important; /* Permite scroll flexbox */
+    
+    display: grid !important;
+    /* Grid responsivo: colunas de no mínimo 85px */
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
+    grid-auto-rows: max-content; /* Altura do conteúdo */
+    gap: 8px !important;
+    align-content: start !important;
+    
+    overflow-y: auto !important; /* Scroll apenas se encher de cards */
+    padding-right: 5px; /* Espaço para o scroll */
+}
+
+/* Barra de rolagem dos cards */
+#stats-list-dynamic::-webkit-scrollbar {
+    width: 5px;
+}
+#stats-list-dynamic::-webkit-scrollbar-thumb {
+    background-color: var(--text-gray);
+    border-radius: 1px;
+}
+
+/* ==========================================================================
+   LAYOUT DE 2 COLUNAS (Sem a área de Anime Fixa)
+   ========================================================================== */
+
+/* Layout Principal volta a ser 2 colunas equilibradas */
+.panels-row {
+    display: flex !important;
+    gap: 20px !important;
+    width: 95%;
+    max-width: 1200px;
+    height: 85vh;
+    margin: 0 auto;
+}
+
+/* O Timer ocupa um pouco menos */
+.timer-panel {
+    flex: 0.8 !important; 
+    min-width: 300px;
+}
+
+/* O Diário ganha destaque total */
+.diary-panel {
+    flex: 1.2 !important; /* Mais largo para caber histórico e cards */
+    min-width: 400px;
+}
+
+/* Esconde o anime-panel antigo se ele ainda estiver no layout principal */
+.panels-row > .anime-panel {
+    display: none !important;
+}
+
+/* ==========================================================================
+   AJUSTES DA JANELA FLUTUANTE DE CONTEÚDO
+   ========================================================================== */
+
+/* Ajuste para o conteúdo preencher a janela modal */
+#content-window-overlay .anime-panel {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#content-window-overlay .anime-list-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Garante que o botão central não atrapalhe em telas pequenas */
+@media (max-width: 600px) {
+    .top-center-actions span { display: none; } /* Esconde texto, deixa ícone */
+}
+
+/* ==========================================================================
+   CORREÇÃO DE CAMADAS (Z-INDEX)
+   ========================================================================== */
+
+/* A janela de "Novo Item" precisa ser maior que 5000 para aparecer na frente */
+#anime-form-modal {
+    z-index: 6000 !important; 
+    background: rgba(0,0,0,0.6); /* Escurece um pouco mais o fundo */
+}
+
+/* Garante que o input de arquivo não quebre o layout */
+#anime-cover-input {
+    display: none;
+}
+
+/* ==========================================================================
+   LAYOUT FINAL: 3 COLUNAS (TIMER ESTREITO)
+   ========================================================================== */
+
+.main-content {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 40px;
+    width: 100%;
+}
+
+.panels-row {
+    display: flex !important;
+    gap: 15px !important;
+    width: 95%;
+    max-width: 1300px;
+    height: 85vh;
+}
+
+/* 1. TIMER (Bem mais estreito agora) */
+.timer-panel {
+    flex: 0.6 !important; /* Valor menor = largura menor */
+    min-width: 240px;
+    padding: 10px !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. DIÁRIO (O principal) */
+.diary-panel {
+    flex: 1.2 !important; /* Valor maior = largura maior */
+    min-width: 320px;
+}
+
+/* 3. ANIME (Lateral direita) */
+.anime-panel {
+    flex: 0.8 !important;
+    min-width: 260px;
+    display: flex !important; /* Garante que apareça */
+    flex-direction: column;
+}
+
+/* Ajustes visuais dentro do painel de Anime */
+.anime-list-area {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-soft);
+    padding: 0;
+}
+.anime-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-soft);
+    padding: 10px !important;
+}
+
+/* ==========================================================================
+   LAYOUT FINAL (VERSÃO SUPER COMPACTA): TIMER E DIÁRIO MÍNIMOS
+   ========================================================================== */
+
+.main-content {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 40px;
+    width: 100%;
+}
+
+.panels-row {
+    display: flex !important;
+    gap: 12px !important;
+    width: 98%; 
+    max-width: 1600px;
+    height: 85vh;
+    
+    /* --- O SEGREDO DO ALINHAMENTO --- */
+    justify-content: center !important; /* Centraliza os itens na horizontal */
+    margin: 0 auto !important;          /* Garante que o bloco fique no meio */
+}
+
+/* 1. TIMER (Largura Mínima Absoluta) */
+.timer-panel {
+    flex: 0.25 !important; /* Muito baixo: só o essencial */
+    min-width: 210px !important; /* Largura mínima para o círculo não quebrar */
+    padding: 8px !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. DIÁRIO (Bem Estreito) */
+.diary-panel {
+    flex: 0.4 !important; /* Menor que antes */
+    min-width: 250px !important; /* Largura mínima para o calendário caber */
+}
+
+/* 3. ANIME (Dominante - Ocupa todo o resto) */
+.anime-panel {
+    flex: 2 !important; /* O dobro da soma dos outros dois */
+    min-width: 350px !important;
+    display: flex !important;
+    flex-direction: column;
+}
+
+/* Ajustes visuais internos */
+.anime-list-area {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-soft);
+    padding: 0;
+}
+.anime-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-soft);
+    padding: 10px !important;
+}
+
+/* --- ESTILO DO EDITOR DE CÓDIGO PRO --- */
+
+/* Botões das Abas (Estilo VS Code) */
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #999;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border-right: 1px solid #333;
+}
+.tab-btn:hover { color: #fff; background: #2d2d2d; }
+.tab-btn.active { color: #fff; background: #1e1e1e; border-top: 2px solid #007acc; }
+
+/* Wrapper que segura linhas + texto */
+.code-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* Coluna dos Números */
+.line-numbers {
+    width: 45px;
+    background: #1e1e1e;
+    color: #555;
+    text-align: right;
+    padding: 10px 5px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    border-right: 1px solid #333;
+    user-select: none; /* Não deixa selecionar os números */
+    overflow: hidden;
+}
+
+/* Área de Texto Principal */
+.code-area {
+    flex: 1;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: none;
+    padding: 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5; /* Altura da linha IGUAL aos números */
+    resize: none;
+    outline: none;
+    white-space: pre; /* Garante que o código não quebre linha sozinho */
+    overflow-y: auto; /* HABILITA O SCROLLBAR */
+    overflow-x: auto;
+}
+
+/* Scrollbar Bonita */
+.code-area::-webkit-scrollbar { width: 10px; height: 10px; }
+.code-area::-webkit-scrollbar-track { background: #1e1e1e; }
+.code-area::-webkit-scrollbar-thumb { background: #444; border-radius: 5px; }
+.code-area::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Cores específicas para cada linguagem (Syntax Highlighting Fake) */
+#custom-css-area { color: #a9b7c6; }
+#custom-html-area { color: #e8bf6a; }
+#custom-js-area { color: #a5c261; }
+
+
+/* --- BOTÃO DE EDITAR NO CARD DE MATÉRIA --- */
+
+/* O Card precisa ser 'relative' para o botão ficar preso nele */
+.subject-card {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* O Botão Lápis */
+.subject-edit-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    
+    background: #2196F3; /* Azul Material */
+    color: white;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    
+    font-size: 0.8rem;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.subject-edit-btn:hover {
+    background: #1976D2;
+    transform: scale(1.1);
+}
+
+/* --- ESTILO DO BOTÃO DE EDITAR (LÁPIS) --- */
+.subject-card {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.subject-edit-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    background: #2196F3; /* Azul */
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 0.9rem;
+    transition: transform 0.2s;
+}
+
+.subject-edit-btn:hover {
+    transform: scale(1.1);
+    background: #1976D2;
+}
+
+.subject-tag-item {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-soft);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+}
+
+.subject-tag-item:hover {
+    border-color: var(--primary-green);
+    background: var(--primary-green-light);
+}
+
+.subject-tag-item.active-tag {
+    background: var(--primary-green);
+    color: white;
+    border-color: var(--primary-green);
+}
+
+.subject-tag-item .delete-tag {
+    color: #ff5252;
+    font-weight: bold;
+    margin-left: 3px;
+}
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+}
+
+.modal-panel{
+  width:min(520px, 92vw);
+  background:var(--bg-paper, #fff);
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin:10px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+}
+
+.modal-panel{
+  width:min(520px, 92vw);
+  background:var(--bg-paper, #fff);
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin:10px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+}
+
+.modal-panel{
+  width:min(520px, 92vw);
+  background:var(--bg-paper, #fff);
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin:10px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+}
+
+.modal-panel{
+  width:min(520px, 92vw);
+  background:var(--bg-paper, #fff);
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin:10px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.45);
+  z-index:9999;
+}
+
+.modal-panel{
+  width:min(520px, 92vw);
+  background:var(--bg-paper, #fff);
+  border:1px solid rgba(0,0,0,.12);
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+
+.row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin:10px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+
+
+
+
+
+
+
+
+
+
+.subject-tag-item {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-soft);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+}
+
+.subject-tag-item:hover {
+    border-color: var(--primary-green);
+    background: var(--primary-green-light);
+}
+
+.subject-tag-item.active-tag {
+    background: var(--primary-green);
+    color: white;
+    border-color: var(--primary-green);
+}
+
+.subject-tag-item .delete-tag {
+    color: #ff5252;
+    font-weight: bold;
+    margin-left: 3px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============ UNIVERSAL (SUBCARDS) - MESMA APARÊNCIA DE "MATÉRIAS" ============ */
+
+#universal-menu-modal.rural-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
+  z-index: 2147483000; /* alto para não ficar atrás */
+}
+
+#universal-menu-modal .rural-window{
+  width: min(860px, 92vw);
+  height: min(520px, 78vh);
+  background: #f4f4f4;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#universal-menu-modal .rural-window-header{
+  height: 44px;
+  background: #efefef;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+
+#universal-menu-modal .rural-window-title{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #333;
+}
+
+#universal-menu-modal .rural-window-icon{
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.9;
+}
+
+#universal-menu-modal .rural-window-close{
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+#universal-menu-modal .rural-window-close:hover{
+  background: rgba(0,0,0,0.06);
+  color: #333;
+}
+
+#universal-menu-modal .rural-window-body{
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#universal-menu-modal .rural-window-top{
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+  padding-bottom: 6px;
+  color: #777;
+}
+
+#universal-menu-modal .rural-window-total{
+  font-size: 14px;
+  color: #777;
+}
+#universal-menu-modal .rural-window-total strong{
+  color: #333;
+}
+
+#universal-menu-modal .rural-cards-grid{
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+  border-top: 1px solid rgba(0,0,0,0.10);
+  border-bottom: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.35);
+
+  /* grid parecido com a área da imagem */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+#universal-menu-modal .rural-window-footer{
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 2px;
+}
+
+#universal-menu-modal .rural-add-btn{
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #111;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+#universal-menu-modal .rural-add-btn:hover{
+  background: rgba(0,0,0,0.06);
+}
+
+#universal-menu-modal .rural-add-btn .plus{
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+/* Card do subcard (igual “cartão branco” da imagem) */
+#universal-menu-modal .subcard-tile{
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.10);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  padding: 12px 10px 10px;
+  min-height: 110px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+#universal-menu-modal .subcard-tile:hover{
+  transform: translateY(-1px);
+}
+
+/* botões canto (estilo discreto) */
+#universal-menu-modal .subcard-btn{
+  position: absolute;
+  top: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+#universal-menu-modal .subcard-btn:hover{
+  opacity: 1;
+}
+
+#universal-menu-modal .subcard-btn.edit{ left: 8px; color: #1e88e5; }
+#universal-menu-modal .subcard-btn.del{ right: 8px; color: #e53935; }
+
+#universal-menu-modal .subcard-icon{
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+#universal-menu-modal .subcard-emoji{
+  font-size: 28px;
+  line-height: 1;
+}
+
+#universal-menu-modal .subcard-name{
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#universal-menu-modal .subcard-time{
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+
+
+
+/* ================== MODAL EDITAR (MATÉRIA ou SUBCARD) ================== */
+.edit-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483647; /* garante que fica por cima de tudo */
+}
+
+.edit-window{
+  width: min(520px, 92vw);
+  background: #d9d0cb;               /* tom do print */
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+.edit-header{
+  height: 44px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 0 14px;
+  background: rgba(255,255,255,0.20);
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+.edit-title{
+  font-weight: 900;
+  letter-spacing: 1px;
+  font-size: 14px;
+  color: #2b2b2b;
+  text-transform: uppercase;
+}
+
+.edit-close-x{
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: #2b2b2b;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+.edit-close-x:hover{ background: rgba(0,0,0,0.08); }
+
+.edit-body{
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-section{
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.edit-section-title{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  font-weight: 800;
+  color: #2b2b2b;
+  margin-bottom: 10px;
+}
+
+
+
+/* Estilo universal para cards internos */
+.subject-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent !important;
+}
+.subject-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.edit-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--primary-green);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.subject-card:hover .edit-badge {
+    opacity: 1;
+}
