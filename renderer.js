@@ -1065,14 +1065,22 @@ function setMode(mode) {
     // Se mudou para Estudo ou Anime, limpa o subcard ativo.
     // MAS, se mudou para um modo Customizado (pasta), MANTÉM o subcard ativo se ele pertencer a essa pasta.
     if (mode === "estudo" || mode === "anime") {
-        currentSubcard = null;
-        window.activeSubcardId = null;
+        const keepSubjectSubcard = mode === "estudo"
+          && currentSubcard
+          && currentSubcardParent?.type === "subject";
+
+        if (!keepSubjectSubcard) {
+            currentSubcard = null;
+            currentSubcardParent = null;
+            window.activeSubcardId = null;
+        }
     } else {
         // Se estamos indo para uma pasta, verificamos se o subcard atual pertence a ela.
         // Se pertencer (ex: clicou no subcard), mantém. Se for troca de aba manual, limpa.
-        if (currentSubcard && window.activeParentId !== mode) {
-             currentSubcard = null;
-             window.activeSubcardId = null;
+        if (currentSubcard && currentSubcardParent?.type === "mode" && String(currentSubcardParent.id) !== String(mode)) {
+            currentSubcard = null;
+            currentSubcardParent = null;
+            window.activeSubcardId = null;
         }
     }
     
@@ -1087,7 +1095,12 @@ function setMode(mode) {
     setModeVisual(mode);
     saveTimerState();
 
-    if (mode === "estudo" && currentSubject) updateTimerIndicatorForItem(currentSubject);
+    if (currentSubcard && currentSubcardParent?.type === "subject" && mode === "estudo") {
+        updateTimerIndicatorForItem(currentSubcard);
+    }
+    else if (mode === "estudo" && currentSubject) {
+        updateTimerIndicatorForItem(currentSubject);
+    }
     else if (currentSubcard) updateTimerIndicatorForItem(currentSubcard); // Prioriza Subcard
     else updateTimerIndicatorForItem(null);
 }
