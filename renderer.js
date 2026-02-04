@@ -76,6 +76,7 @@ let currentSessionMinutes = 0;
 
 let currentSubject = null;
 let currentSubcard = null;
+let currentSubcardParent = null;
 
 // ✅ parentId robusto (não perde)
 let currentParentCardId = null;
@@ -84,6 +85,7 @@ let editContext = {
   type: "subject", // "subject" | "subcard"
   subjectId: null,
   parentModeId: null,
+  parentType: "mode",
   subId: null,
 };
 
@@ -131,7 +133,7 @@ let appData = {
   modeConfigs: {},
   stats: { estudo: 0, anime: 0, episodes: 0, streak: 0, lastLogDate: null },
   logs: [],
-  studySubjects: [{ id: 1, name: "Geral", icon: "📝", customImage: null, totalMinutes: 0, tags: [], currentTag: null }],
+  studySubjects: [{ id: 1, name: "Geral", icon: "📝", customImage: null, totalMinutes: 0, tags: [], currentTag: null, subItems: [] }],
   animeList: [],
 };
 
@@ -147,23 +149,59 @@ function ensureArrays() {
   if (!appData.modeConfigs) appData.modeConfigs = {};
   if (!appData.stats) appData.stats = { estudo: 0, anime: 0, episodes: 0, streak: 0, lastLogDate: null };
   if (!appData.studySubjects || !Array.isArray(appData.studySubjects) || appData.studySubjects.length === 0) {
-    appData.studySubjects = [{ id: 1, name: "Geral", icon: "📝", customImage: null, totalMinutes: 0, tags: [], currentTag: null }];
+    appData.studySubjects = [{ id: 1, name: "Geral", icon: "📝", customImage: null, totalMinutes: 0, tags: [], currentTag: null, subItems: [] }];
   }
+  (appData.studySubjects || []).forEach(s => {
+    if (!Array.isArray(s.subItems)) s.subItems = [];
+  });
 }
 
 function getParentModeById(modeId) {
   return (appData.customModes || []).find(m => m.id === modeId) || null;
 }
 
-function ensureCustomSubItems(modeId) {
-  const cm = getParentModeById(modeId);
-  if (!cm) return null;
-  if (!Array.isArray(cm.subItems)) cm.subItems = [];
-  return cm;
+function buildParentKey(type, id) {
+  return `${type}:${id}`;
+}
+window.buildParentKey = buildParentKey;
+
+function parseParentKey(parentKey) {
+  if (!parentKey) return null;
+  const raw = String(parentKey);
+  if (raw.includes(":")) {
+    const [type, ...rest] = raw.split(":");
+    return { type, id: rest.join(":") };
+  }
+  return { type: "mode", id: raw };
 }
 
-function findSubcard(parentModeId, subId) {
-  const parent = ensureCustomSubItems(parentModeId);
+function getParentItemFromKey(parentKey) {
+  const parsed = parseParentKey(parentKey);
+  if (!parsed) return null;
+
+  if (parsed.type === "subject") {
+    return (appData.studySubjects || []).find(s => String(s.id) === String(parsed.id)) || null;
+  }
+
+  return (appData.customModes || []).find(m => String(m.id) === String(parsed.id)) || null;
+}
+
+function normalizeParentKey(parentKey, parentType = "mode") {
+  if (!parentKey) return null;
+  const raw = String(parentKey);
+  if (raw.includes(":")) return raw;
+  return buildParentKey(parentType, parentKey);
+}
+
+function ensureCustomSubItems(parentKey) {
+  const parent = getParentItemFromKey(parentKey);
+  if (!parent) return null;
+  if (!Array.isArray(parent.subItems)) parent.subItems = [];
+  return parent;
+}
+
+function findSubcard(parentKey, subId) {
+  const parent = ensureCustomSubItems(parentKey);
   if (!parent) return null;
   return (parent.subItems || []).find(s => s.id === subId) || null;
 }
@@ -585,7 +623,10 @@ window.getIconHtmlForLog = function(log) {
     // 1. TENTA VIA META (Se disponível)
     if (log.meta && log.meta.kind) {
         if (log.meta.kind === "subcard") {
-            const sc = findSubcard(log.meta.parentModeId, log.meta.subId);
+            const parentType = log.meta.parentType || "mode";
+            const parentId = log.meta.parentId || log.meta.parentModeId;
+            const parentKey = parentId ? normalizeParentKey(parentId, parentType) : null;
+            const sc = parentKey ? findSubcard(parentKey, log.meta.subId) : null;
             if (sc) return iconHtmlFromItem(sc, 24, true);
         }
         if (log.meta.kind === "subject") {
@@ -601,6 +642,14 @@ window.getIconHtmlForLog = function(log) {
         for (const cm of appData.customModes) {
             if (cm.subItems) {
                 const foundSub = cm.subItems.find(s => s.name.trim() === baseName);
+                if (foundSub) return iconHtmlFromItem(foundSub, 24, true);
+            }
+        }
+    }
+    if (appData.studySubjects) {
+        for (const subj of appData.studySubjects) {
+            if (subj.subItems) {
+                const foundSub = subj.subItems.find(s => s.name.trim() === baseName);
                 if (foundSub) return iconHtmlFromItem(foundSub, 24, true);
             }
         }
@@ -838,11 +887,32 @@ window.finishTimer = function() {
             // Atualiza minutos
             const ref = (appData.studySubjects || []).find(s => s.id === currentSubject.id);
             if (ref) ref.totalMinutes = (ref.totalMinutes || 0) + duration;
+
+            if (!currentSubcard && window.ACTIVE_SESSION && window.ACTIVE_SESSION.type === "subcard") {
+                const sameParent = window.ACTIVE_SESSION.parentType === "subject"
+                  && String(window.ACTIVE_SESSION.parentId) === String(currentSubject.id);
+                if (sameParent && ref?.subItems) {
+                    const recovered = ref.subItems.find(s => s.id === window.ACTIVE_SESSION.subId);
+                    if (recovered) {
+                        currentSubcard = recovered;
+                        currentSubcardParent = { type: "subject", id: currentSubject.id };
+                    }
+                }
+            }
             
-            // Define Nome e Tag
-            const tagPart = currentSubject.currentTag ? ` - ${currentSubject.currentTag}` : "";
-            logName = `${currentSubject.name}${tagPart}`;
-            logMeta = { kind: "subject", subjectId: currentSubject.id };
+            if (currentSubcard && currentSubcardParent?.type === "subject" && String(currentSubcardParent.id) === String(currentSubject.id)) {
+                const subRef = ref?.subItems?.find(s => s.id === currentSubcard.id);
+                if (subRef) subRef.totalMinutes = (subRef.totalMinutes || 0) + duration;
+
+                const tagPart = currentSubcard.currentTag ? ` - ${currentSubcard.currentTag}` : "";
+                logName = `${currentSubcard.name}${tagPart}`;
+                logMeta = { kind: "subcard", parentType: "subject", parentId: currentSubject.id, subId: currentSubcard.id };
+            } else {
+                // Define Nome e Tag
+                const tagPart = currentSubject.currentTag ? ` - ${currentSubject.currentTag}` : "";
+                logName = `${currentSubject.name}${tagPart}`;
+                logMeta = { kind: "subject", subjectId: currentSubject.id };
+            }
         } else {
             logName = "Estudo Geral";
         }
@@ -869,7 +939,7 @@ window.finishTimer = function() {
             logName = `${currentSubcard.name}${tagPart}`;
             
             // Meta crucial para o ícone
-            logMeta = { kind: "subcard", parentModeId: parentObj.id, subId: currentSubcard.id };
+            logMeta = { kind: "subcard", parentType: "mode", parentId: parentObj.id, parentModeId: parentObj.id, subId: currentSubcard.id };
         } else {
             // Se nenhum subcard foi escolhido, usa o nome da Pasta
             logName = parentObj ? parentObj.name : currentMode;
@@ -1007,14 +1077,22 @@ function setMode(mode) {
     // Se mudou para Estudo ou Anime, limpa o subcard ativo.
     // MAS, se mudou para um modo Customizado (pasta), MANTÉM o subcard ativo se ele pertencer a essa pasta.
     if (mode === "estudo" || mode === "anime") {
-        currentSubcard = null;
-        window.activeSubcardId = null;
+        const keepSubjectSubcard = mode === "estudo"
+          && currentSubcard
+          && currentSubcardParent?.type === "subject";
+
+        if (!keepSubjectSubcard) {
+            currentSubcard = null;
+            currentSubcardParent = null;
+            window.activeSubcardId = null;
+        }
     } else {
         // Se estamos indo para uma pasta, verificamos se o subcard atual pertence a ela.
         // Se pertencer (ex: clicou no subcard), mantém. Se for troca de aba manual, limpa.
-        if (currentSubcard && window.activeParentId !== mode) {
-             currentSubcard = null;
-             window.activeSubcardId = null;
+        if (currentSubcard && currentSubcardParent?.type === "mode" && String(currentSubcardParent.id) !== String(mode)) {
+            currentSubcard = null;
+            currentSubcardParent = null;
+            window.activeSubcardId = null;
         }
     }
     
@@ -1029,7 +1107,12 @@ function setMode(mode) {
     setModeVisual(mode);
     saveTimerState();
 
-    if (mode === "estudo" && currentSubject) updateTimerIndicatorForItem(currentSubject);
+    if (currentSubcard && currentSubcardParent?.type === "subject" && mode === "estudo") {
+        updateTimerIndicatorForItem(currentSubcard);
+    }
+    else if (mode === "estudo" && currentSubject) {
+        updateTimerIndicatorForItem(currentSubject);
+    }
     else if (currentSubcard) updateTimerIndicatorForItem(currentSubcard); // Prioriza Subcard
     else updateTimerIndicatorForItem(null);
 }
@@ -1234,7 +1317,10 @@ window.deleteCustomMode = function (id) {
     // remove logs por META (correto)
     appData.logs = (appData.logs || []).filter(l => {
       if (l.meta && l.meta.kind === "custom" && l.meta.modeId === id) return false;
-      if (l.meta && l.meta.kind === "subcard" && l.meta.parentModeId === id) return false;
+      if (l.meta && l.meta.kind === "subcard") {
+        if (String(l.meta.parentModeId) === String(id)) return false;
+        if (l.meta.parentType === "mode" && String(l.meta.parentId) === String(id)) return false;
+      }
       return true;
     });
 
@@ -1475,6 +1561,12 @@ function getEditingItem() {
     return (appData.studySubjects || []).find(s => s.id === editContext.subjectId) || null;
   }
   if (editContext.type === "subcard") {
+    if (editContext.parentType === "subject") {
+      const parent = (appData.studySubjects || []).find(s => String(s.id) === String(editContext.parentModeId));
+      if (!parent || !Array.isArray(parent.subItems)) return null;
+      return parent.subItems.find(s => s.id === editContext.subId) || null;
+    }
+
     const parent = (appData.customModes || []).find(m => m.id === editContext.parentModeId);
     if (!parent || !Array.isArray(parent.subItems)) return null;
     return parent.subItems.find(s => s.id === editContext.subId) || null;
@@ -1727,7 +1819,11 @@ window.deleteSubject = function (id, event) {
     appData.studySubjects = (appData.studySubjects || []).filter(s => s.id !== id);
 
     // ✅ remove logs por META (correto)
-    appData.logs = (appData.logs || []).filter(l => !(l.meta && l.meta.kind === "subject" && l.meta.subjectId === id));
+    appData.logs = (appData.logs || []).filter(l => {
+      if (l.meta && l.meta.kind === "subject" && l.meta.subjectId === id) return false;
+      if (l.meta && l.meta.kind === "subcard" && l.meta.parentType === "subject" && String(l.meta.parentId) === String(id)) return false;
+      return true;
+    });
 
     // fallback legado por nome
     if (nameToDelete) {
@@ -1853,9 +1949,10 @@ window.renderStudySubjects = function () {
 /* =========================
    SUBCARDS UNIVERSAIS (CUSTOM)
 ========================= */
-window.openUniversalMenu = function (parentId) {
+window.openUniversalMenu = function (parentId, parentType = "mode") {
   // ✅ FIX: sempre setar e persistir
-  const pid = String(parentId || "");
+  const pid = normalizeParentKey(parentId, parentType);
+  if (!pid) return;
   setCurrentParentId(pid);
 
   const modal = $("universal-menu-modal");
@@ -2003,7 +2100,9 @@ window.deleteUniversalSubcard = function (subId, event) {
   if (event) event.stopPropagation();
 
   const pid = getCurrentParentIdSafe();
-  const parent = pid ? ensureCustomSubItems(pid) : null;
+  const parentKey = pid ? normalizeParentKey(pid) : null;
+  const parentInfo = parseParentKey(parentKey);
+  const parent = parentKey ? ensureCustomSubItems(parentKey) : null;
   if (!parent) return;
 
   const sub = (parent.subItems || []).find(s => s.id === subId);
@@ -2020,7 +2119,13 @@ window.deleteUniversalSubcard = function (subId, event) {
 
       // 2) remove logs por META (correto, sem colisão)
       appData.logs = (appData.logs || []).filter(l => {
-        if (l.meta && l.meta.kind === "subcard" && l.meta.parentModeId === pid && l.meta.subId === subId) return false;
+        if (l.meta && l.meta.kind === "subcard") {
+          if (parentInfo?.type === "subject") {
+            if (l.meta.parentType === "subject" && String(l.meta.parentId) === String(parentInfo.id) && l.meta.subId === subId) return false;
+          } else if (String(l.meta.parentModeId) === String(parentInfo?.id) || (l.meta.parentType === "mode" && String(l.meta.parentId) === String(parentInfo?.id))) {
+            if (l.meta.subId === subId) return false;
+          }
+        }
         return true;
       });
 
@@ -2031,6 +2136,8 @@ window.deleteUniversalSubcard = function (subId, event) {
       // 4) se estava selecionado
       if (currentSubcard && currentSubcard.id === subId) {
         currentSubcard = null;
+        currentSubcardParent = null;
+        window.ACTIVE_SESSION = null;
         updateTimerIndicatorForItem(null);
       }
 
@@ -2046,28 +2153,41 @@ window.deleteUniversalSubcard = function (subId, event) {
 // ==========================================================================
 window.selectUniversalSubcard = function (subId) {
     const pid = typeof getCurrentParentIdSafe === 'function' ? getCurrentParentIdSafe() : window.currentParentCardId;
-    const parent = pid ? ensureCustomSubItems(pid) : null;
+    const parentKey = pid ? normalizeParentKey(pid) : null;
+    const parent = parentKey ? ensureCustomSubItems(parentKey) : null;
     if (!parent) return;
 
     const sub = (parent.subItems || []).find(s => s.id === subId);
     if (!sub) return;
 
     console.log("Selecionando Subcard:", sub.name);
+    const parentInfo = parseParentKey(parentKey);
 
     // Define variáveis
     currentSubcard = sub;
-    currentSubject = null; // Limpa sujeito do Estudo Total
+    currentSubcardParent = parentInfo;
+    if (parentInfo?.type === "subject") {
+      currentSubject = parent;
+    } else {
+      currentSubject = null; // Limpa sujeito do Estudo Total
+    }
     window.lastSelectedType = 'subcard'; // Marca o tipo
     
     // MEMÓRIA DE SEGURANÇA (Para o timer ler depois)
     window.memSubcardId = sub.id;
     window.memParentId = parent.id;
+    window.memParentType = parentInfo?.type || "mode";
+    window.ACTIVE_SESSION = { type: "subcard", parentId: parent.id, parentType: parentInfo?.type || "mode", subId: sub.id };
 
     // Fecha janelas
     window.closeUniversalMenu();
 
     // Define o modo (nome da pasta)
-    setMode(parent.id);
+    if (parentInfo?.type === "subject") {
+      setMode("estudo");
+    } else {
+      setMode(parent.id);
+    }
     
     // FORÇA A ATUALIZAÇÃO VISUAL COM O SUBCARD (Sobrepondo o setMode)
     setTimeout(() => updateTimerIndicatorForItem(sub), 50);
@@ -2080,8 +2200,9 @@ window.openSubcardEdit = function(subId, event){
 
   const pid = getCurrentParentIdSafe();
   if (!pid) return;
+  const parentInfo = parseParentKey(pid);
 
-  editContext = { type: "subcard", subjectId: null, parentModeId: pid, subId };
+  editContext = { type: "subcard", subjectId: null, parentModeId: parentInfo?.id || pid, parentType: parentInfo?.type || "mode", subId };
 
   const sub = findSubcard(pid, subId);
   if(!sub) return;
@@ -2883,9 +3004,11 @@ window.renderCustomTabs = function() {
         // --- AQUI ESTÁ A MUDANÇA ---
         if (m.id === 'anime') {
             b.onclick = () => switchMode(m.id); // Anime continua igual
+        } else if (m.id === 'estudo') {
+            b.onclick = () => window.openStudyMenu();
         } else {
-            // Estudo e Customs abrem a Janela de Pastas
-            b.onclick = () => window.openUniversalMenu(m.id);
+            // Customs abrem a Janela de Subcards
+            b.onclick = () => window.openUniversalMenu(m.id, "mode");
         }
 
         if (!m.isDefault) {
@@ -2903,35 +3026,33 @@ window.renderCustomTabs = function() {
 };
 
 // 4. NOVA FUNÇÃO: ABRIR MENU (UNIVERSAL)
-window.openUniversalMenu = function(parentId) {
-    const modal = document.getElementById('study-menu-modal');
-    if (!modal) return;
-    
-    // Define onde estamos
-    window.currentParentContext = parentId;
-    
-    // Título da Janela
-    let title = "Estudo Total";
-    if (parentId !== 'estudo') {
-        const p = appData.customModes.find(m => m.id === parentId);
-        if(p) title = p.name;
-    }
-    const titleEl = document.getElementById('study-menu-title');
-    if(titleEl) titleEl.innerText = title;
+window.openUniversalMenu = function(parentId, parentType = "mode") {
+    const pid = normalizeParentKey(parentId, parentType);
+    if (!pid) return;
 
-    // Garante que o botão "+" use a função de criação universal
-    const addBtn = document.querySelector('.add-subject-btn');
-    if(addBtn) {
-        const newBtn = addBtn.cloneNode(true);
-        addBtn.parentNode.replaceChild(newBtn, addBtn);
-        newBtn.onclick = window.openNewSubjectModal;
+    setCurrentParentId(pid);
+
+    const modal = document.getElementById('universal-menu-modal');
+    if (!modal) return;
+
+    const parent = ensureCustomSubItems(pid);
+    if (!parent) return;
+
+    if (document.getElementById('universal-menu-title')) {
+        document.getElementById('universal-menu-title').innerText = `Subcards: ${parent.name}`;
     }
 
     modal.style.display = 'flex';
-    renderStudySubjects();
+    renderUniversalSubCards();
 };
 // Redireciona a chamada antiga
-window.openStudyMenu = function() { window.openUniversalMenu('estudo'); };
+window.openStudyMenu = function() {
+    window.currentParentContext = "estudo";
+    const modal = document.getElementById('study-menu-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    renderStudySubjects();
+};
 
 // 5. SOBRESCRITA: RENDERIZAR CARDS (USA A LISTA ATIVA)
 window.renderStudySubjects = function() {
@@ -2978,13 +3099,19 @@ window.renderStudySubjects = function() {
             card.innerHTML = `
                 <div onclick="event.stopPropagation(); deleteSubject('${subject.id}')" title="Excluir" style="position: absolute; top: 3px; right: 4px; color: #ff5252; font-size: 11px; font-weight: bold; cursor: pointer; z-index: 101; opacity: 0.6; padding: 2px;">✕</div>
                 <div class="subject-edit-btn" onclick="event.stopPropagation(); changeSubjectIconReal('${subject.id}')" title="Editar" style="position: absolute; top: 4px; left: 4px; color: #2196F3; font-size: 9px; cursor: pointer; z-index: 101; background:rgba(255,255,255,0.9); width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"><i class="fas fa-pencil-alt"></i></div>
+                <div class="subject-subcards-btn" onclick="event.stopPropagation(); openUniversalMenu('${buildParentKey("subject", subject.id)}', 'subject')" title="Subcards" style="position: absolute; bottom: 4px; right: 4px; color: var(--text-gray); font-size: 10px; cursor: pointer; z-index: 101; background: rgba(255,255,255,0.9); width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                  <i class="fas fa-layer-group"></i>
+                </div>
                 ${mediaHtml}
                 <div style="font-weight:bold; font-size:0.8rem; color:var(--text-brown); margin-bottom: 3px; line-height:1.1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:95%;">${subject.name}${tagHtml}</div>
                 <div style="font-size:0.65rem; color:var(--text-gray); background: rgba(0,0,0,0.04); padding: 1px 6px; border-radius: 8px;">${formatTime(minutes)}</div>
             `;
             
             // Clique para selecionar
-            card.onclick = () => window.selectUniversalSubject(subject);
+            card.onclick = (e) => {
+                if (e.target.closest(".subject-edit-btn") || e.target.closest(".subject-subcards-btn") || e.target.innerText === "✕") return;
+                window.selectUniversalSubject(subject);
+            };
             grid.appendChild(card);
         });
     }
@@ -3004,7 +3131,7 @@ window.confirmCreateSubject = function() {
     const newSub = { 
         id: Date.now(), name: name, icon: finalIcon, 
         customImage: finalImg, totalMinutes: 0, 
-        tags: [], tagData: [], currentTag: null 
+        tags: [], tagData: [], currentTag: null, subItems: []
     };
     
     // --- USA A LISTA ATIVA ---
@@ -3018,6 +3145,9 @@ window.confirmCreateSubject = function() {
 // 7. SOBRESCRITA: SELECIONAR (Configura o timer com o contexto do Pai)
 window.selectUniversalSubject = function(subject) {
     currentSubject = subject;
+    currentSubcard = null;
+    currentSubcardParent = null;
+    window.ACTIVE_SESSION = null;
     document.getElementById('study-menu-modal').style.display = 'none';
     
     // Timer assume o modo da PASTA (Estudo ou Custom)
@@ -3038,10 +3168,21 @@ window.deleteSubject = function(id, event) {
     if(idx > -1 && confirm("Excluir item e histórico?")) {
         const name = list[idx].name;
         list.splice(idx, 1);
-        if(appData.logs) appData.logs = appData.logs.filter(l => !l.mode.startsWith(name));
+        if(appData.logs) {
+            appData.logs = appData.logs.filter(l => {
+                if (l.meta && l.meta.kind === "subject" && String(l.meta.subjectId) === String(id)) return false;
+                if (l.meta && l.meta.kind === "subcard" && l.meta.parentType === "subject" && String(l.meta.parentId) === String(id)) return false;
+                return !String(l.mode || "").startsWith(name);
+            });
+        }
         
         if(currentSubject && currentSubject.id == id) {
             currentSubject = null;
+            updateTimerIndicatorForItem(null);
+        }
+        if (currentSubcard && currentSubcardParent?.type === "subject" && String(currentSubcardParent.id) === String(id)) {
+            currentSubcard = null;
+            currentSubcardParent = null;
             updateTimerIndicatorForItem(null);
         }
         saveData();
@@ -4260,14 +4401,23 @@ window.setMode = function(mode) {
     // Se o usuário clicar manualmente nas abas "Estudo" ou "Anime", limpamos a sessão do subcard.
     // Mas se o modo for igual ao pai da sessão ativa, MANTEMOS a sessão.
     if (mode === 'estudo' || mode === 'anime') {
-        window.ACTIVE_SESSION = null;
-        currentSubcard = null;
-        currentSubject = null;
-    } 
+        const keepSubjectSubcard = mode === "estudo"
+          && currentSubcard
+          && currentSubcardParent?.type === "subject";
+
+        if (!keepSubjectSubcard) {
+            window.ACTIVE_SESSION = null;
+            currentSubcard = null;
+            currentSubcardParent = null;
+            if (mode === "estudo" || mode === "anime") currentSubject = null;
+        }
+    }
     // Se trocou de uma pasta customizada para outra manualmente
-    else if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.parentId !== mode) {
+    else if ((window.ACTIVE_SESSION && window.ACTIVE_SESSION.parentId !== mode)
+      || (currentSubcard && currentSubcardParent?.type === "mode" && String(currentSubcardParent.id) !== String(mode))) {
         window.ACTIVE_SESSION = null;
         currentSubcard = null;
+        currentSubcardParent = null;
     }
 
     currentSessionMinutes = 0;
@@ -4282,10 +4432,14 @@ window.setMode = function(mode) {
     // Atualiza o indicador visual do topo
     if (window.ACTIVE_SESSION && window.ACTIVE_SESSION.type === 'subcard') {
         // Tenta recuperar o objeto real para mostrar ícone
-        const p = ensureCustomSubItems(window.ACTIVE_SESSION.parentId);
+        const parentKey = normalizeParentKey(window.ACTIVE_SESSION.parentId, window.ACTIVE_SESSION.parentType || "mode");
+        const p = ensureCustomSubItems(parentKey);
         const s = p ? p.subItems.find(x => x.id === window.ACTIVE_SESSION.subId) : null;
         if (s) updateTimerIndicatorForItem(s);
-    } 
+    }
+    else if (currentSubcard && currentSubcardParent?.type === "subject" && mode === "estudo") {
+        updateTimerIndicatorForItem(currentSubcard);
+    }
     else if (currentSubject) {
         updateTimerIndicatorForItem(currentSubject);
     } 
